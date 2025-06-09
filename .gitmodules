@@ -1,0 +1,18 @@
+[submodule "Modpack/third_party/libarchive-cpp"]
+	path = Modpack/third_party/libarchive-cpp
+	url = https://github.com/username000101/libarchive-cpp
+[submodule "third_party/spdlog"]
+	path = third_party/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "third_party/CLI11"]
+	path = third_party/CLI11
+	url = https://github.com/CLIUtils/CLI11
+[submodule "Args/third_party/CLI11"]
+	path = Args/third_party/CLI11
+	url = https://github.com/CLIUtils/CLI11
+[submodule "third_party/FTXUI"]
+	path = third_party/FTXUI
+	url = https://github.com/ArthurSonzogni/FTXUI
+[submodule "third_party/json"]
+	path = third_party/json
+	url = https://github.com/nlohmann/json

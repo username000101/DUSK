@@ -8,8 +8,6 @@
 
 namespace auth {
     bool setTdlibParameters(std::shared_ptr<td::ClientManager> client,
-                            td::ClientManager::ClientId clientId,
-                            std::int64_t* requestId,
                             bool use_test_dc,
                             std::filesystem::path db_dir,
                             std::filesystem::path files_dir,
@@ -23,5 +21,5 @@ namespace auth {
                             std::string device_model,
                             std::string system_version,
                             std::string application_version);
-    bool authorize(std::shared_ptr<td::ClientManager> client, td::ClientManager::ClientId clientId, std::int64_t* requestId);
+    bool authorize();
 }

@@ -1,8 +1,12 @@
 #include "Auth.hpp"
 
+#include <iostream>
+
 #include <td/telegram/td_api.h>
 
-bool auth::setTdlibParameters(std::shared_ptr<td::ClientManager> client, td::ClientManager::ClientId clientId, std::int64_t* requestId, bool use_test_dc, std::filesystem::path db_dir, std::filesystem::path files_dir, bool use_files_db, bool use_chat_info_db, bool use_message_db, bool use_secret_chats, td::td_api::int32 api_id, std::string api_hash, std::string system_lang_code, std::string device_model, std::string system_version, std::string application_version) {
+#include "Updates.hpp"
+
+bool auth::setTdlibParameters(std::shared_ptr<td::ClientManager> client, bool use_test_dc, std::filesystem::path db_dir, std::filesystem::path files_dir, bool use_files_db, bool use_chat_info_db, bool use_message_db, bool use_secret_chats, td::td_api::int32 api_id, std::string api_hash, std::string system_lang_code, std::string device_model, std::string system_version, std::string application_version) {
     if (!client)
         return false;
     auto parameters = td::td_api::make_object<td::td_api::setTdlibParameters>();
@@ -19,7 +23,11 @@ bool auth::setTdlibParameters(std::shared_ptr<td::ClientManager> client, td::Cli
     parameters->database_directory_ = db_dir.string();
     parameters->files_directory_ = files_dir.string();
     parameters->use_test_dc_ = use_test_dc;
-    client->send(clientId, ++(*requestId), std::move(parameters));
+
+    td::ClientManager::execute(td::td_api::make_object<td::td_api::setLogVerbosityLevel>(3));
+
+    auto response = update::send_request(std::move(parameters), client, client->create_client_id());
+    std::cout << "response id is " << (response.object ? std::to_string(response.object->get_id()) : "NULLPTR") << std::endl;
 
     return false;
 }

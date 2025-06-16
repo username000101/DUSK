@@ -1,8 +1,20 @@
 #include "Updates.hpp"
 
+#include <algorithm>
+#include <cstdint>
+
 #include <unordered_map>
+#include <vector>
 
 std::unordered_map<td::ClientManager::RequestId, td::ClientManager::Response> unconfirmed_updates;
+
+std::vector<std::int32_t> ignore_update_ids = {
+    td::td_api::updateAuthorizationState::ID,
+    td::td_api::updateOption::ID,
+    td::td_api::updateDefaultBackground::ID,
+    td::td_api::updateFileDownloads::ID,
+    td::td_api::updateConnectionState::ID,
+};
 
 td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_api::Function> request, std::shared_ptr<td::ClientManager> client_, td::ClientManager::ClientId client_id_) {
     if (!request)
@@ -42,8 +54,13 @@ td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_a
                       current_req_id, attempts);
 
         auto update = client->receive(timeout);
-        if (!update.object || update.client_id == 0 || update.request_id == 0) {
-            logger->warn("Received an incorrect update(update::object, update::client_id or update::request_id is invalid)");
+        if (update.client_id == 0 || update.request_id == 0) {
+            if (update.object && std::ranges::find(ignore_update_ids, update.object->get_id()) != ignore_update_ids.end()) {
+                --i;
+                continue;
+            }
+            logger->warn("Received an incorrect update(update::object, update::client_id or update::request_id is invalid)(update id: {})",
+                          (update.object ? std::to_string(update.object->get_id()) : "NULLPTR"));
             continue;
         }
 

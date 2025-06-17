@@ -5,6 +5,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "Globals.hpp"
 #include "Macros.hpp"
 
 void write_default_config() {
@@ -28,4 +29,10 @@ void filesystem::check_filesystem() {
         write_default_config();
     if (!std::filesystem::exists(DUSK_ACCOUNTS) || !std::filesystem::is_directory(DUSK_ACCOUNTS))
         std::filesystem::create_directory(DUSK_ACCOUNTS);
+
+    if (globals::current_user != 0) {
+	auto user_dir = std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user);
+        std::filesystem::create_directories(user_dir);
+	std::filesystem::create_directory(user_dir / "modules");
+    }
 }

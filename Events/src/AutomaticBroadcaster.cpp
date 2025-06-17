@@ -6,7 +6,7 @@ void events::EventsInteractions::automatic_broadcaster(std::chrono::milliseconds
     broadcast_stop = false;
     while (!broadcast_stop) {
         if (!updates.empty()) {
-            std::shared_ptr<td::td_api::Update> update(updates.top().second.release());
+            std::shared_ptr<td::td_api::Object> update(updates.top().second.release());
             updates.pop();
 
             for (auto pair : listeners) {

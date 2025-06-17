@@ -36,22 +36,27 @@ endfunction()
 add_subdirectory(third_party/FTXUI)
 add_subdirectory(third_party/json)
 add_subdirectory(third_party/spdlog)
+add_subdirectory(third_party/mutex)
 
 file(GLOB Action_FILES "Updates/include/*" "Updates/src/*")
-add_library(tdaction SHARED ${Action_FILES})
-target_include_directories(tdaction PUBLIC "Updates/include")
-target_link_libraries(Td::TdStatic)
+add_library(tdaction SHARED ${Action_FILES}
+        Updates/src/Loop.cpp)
+target_include_directories(tdaction PUBLIC "Updates/include" "Events/include" "third_party/mutex/include" "Utils")
+target_link_libraries(tdaction PUBLIC Td::TdStatic events )
 
 file(GLOB Args_FILES "Args/include/*" "Args/src/*")
-add_library(args SHARED ${Args_FILES})
-target_include_directories(args PUBLIC "Args/include" "Utils" "Modpack/include")
+add_library(args SHARED ${Args_FILES}
+        Utils/ConfirmDialog.hpp
+        Utils/Input.hpp
+        Updates/include/Loop.hpp)
+target_include_directories(args PUBLIC "Args/include" "Auth/include" "Filesystem/include" "Modpack/include" "Utils" "Updates/include")
 add_subdirectory(Args/third_party/CLI11)
 target_link_libraries(args PUBLIC CLI11::CLI11 ftxui::component ftxui::dom ftxui::screen Td::TdStatic nlohmann_json::nlohmann_json)
 
 file(GLOB Auth_FILES "Auth/include/*" "Auth/src/*")
 add_library(tdauth SHARED ${Auth_FILES})
-target_include_directories(tdauth PUBLIC "Auth/include" "Updates/include")
-target_link_libraries(tdauth PUBLIC tdaction Td::TdStatic spdlog::spdlog)
+target_include_directories(tdauth PUBLIC "Auth/include" "Updates/include" "Utils")
+target_link_libraries(tdauth PUBLIC ftxui::component ftxui::dom ftxui::screen tdaction Td::TdStatic spdlog::spdlog)
 
 file(GLOB Events_FILES "Events/include/*" "Events/src/*")
 add_library(events SHARED ${Events_FILES})
@@ -87,7 +92,7 @@ target_compile_definitions(DUSK PUBLIC DUSK_VERSION="${PROJECT_VERSION}")
 target_link_libraries(DUSK PRIVATE args tdaction tdauth events filesystem spdlog::spdlog modpack)
 
 add_definitions_to_targets(
-        TARGETS args filesystem
+        TARGETS args tdaction tdauth filesystem
         DEFINITIONS DUSK_HOME="${FS_DUSK_HOME}" DUSK_CONFIG="${FS_DUSK_HOME}/config.json" DUSK_ACCOUNTS="${FS_DUSK_HOME}/accounts" DUSK_VERSION="${PROJECT_VERSION}"
 )
 
@@ -100,6 +105,14 @@ else ()
     add_definitions_to_targets(
             TARGETS args modpack
             DEFINITIONS DUSK_TMP="/tmp/DUSK"
+    )
+endif ()
+
+if (DUSK_TDLIB_USE_TEST_DC)
+    message(STATUS "Using test dc for setTdlibParameters")
+    add_definitions_to_targets(
+            TARGETS args DUSK tdauth
+            DEFINITIONS DUSK_TDLIB_USE_TEST_DC=true
     )
 endif ()
 

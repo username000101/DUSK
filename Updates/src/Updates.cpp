@@ -1,20 +1,40 @@
 #include "Updates.hpp"
 
 #include <algorithm>
+#include <array>
+#include <chrono>
 #include <cstdint>
-
+#include <deque>
+#include <thread>
 #include <unordered_map>
-#include <vector>
+
+#include <fair_mutex.hpp>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
+#include "Events.hpp"
 
 std::unordered_map<td::ClientManager::RequestId, td::ClientManager::Response> unconfirmed_updates;
 
-std::vector<std::int32_t> ignore_update_ids = {
-    td::td_api::updateAuthorizationState::ID,
-    td::td_api::updateOption::ID,
-    td::td_api::updateDefaultBackground::ID,
-    td::td_api::updateFileDownloads::ID,
-    td::td_api::updateConnectionState::ID,
-};
+std::deque<td::td_api::object_ptr<td::td_api::Object>> updates;
+yamc::fair::mutex updates_mtx;
+
+void update::updates_broadcaster() {
+    static auto logger = std::make_shared<spdlog::logger>("Updates::updates_broadcaster", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+    std::thread broadcaster_t([]() { events::EventsInteractions::automatic_broadcaster(std::chrono::milliseconds(100)); });
+    broadcaster_t.detach();
+    logger->info("Updates and Events broadcasters has been runing");
+
+    while (true) {
+        if (!updates.empty()) {
+            std::lock_guard<yamc::fair::mutex> lock(updates_mtx);
+            auto update = std::move(updates.back());
+            events::EventsInteractions::append_update(update);
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
 
 td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_api::Function> request, std::shared_ptr<td::ClientManager> client_, td::ClientManager::ClientId client_id_) {
     if (!request)
@@ -44,23 +64,20 @@ td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_a
         unconfirmed_updates.erase(current_req_id);
         return result;
     }
-
     client->send(client_id, current_req_id, std::move(request));
 
-    unsigned short attempts = 15;
-    double timeout = 15.0;
+    constexpr unsigned short attempts = 15;
+    constexpr double timeout = 15.0;
     for (auto i = attempts; i > 0; --i) {
         logger->trace("Trying to get response for request id: {}(attempt until fail: {})",
-                      current_req_id, attempts);
+                      current_req_id, attempts - 1);
 
         auto update = client->receive(timeout);
-        if (update.client_id == 0 || update.request_id == 0) {
-            if (update.object && std::ranges::find(ignore_update_ids, update.object->get_id()) != ignore_update_ids.end()) {
-                --i;
-                continue;
-            }
-            logger->warn("Received an incorrect update(update::object, update::client_id or update::request_id is invalid)(update id: {})",
-                          (update.object ? std::to_string(update.object->get_id()) : "NULLPTR"));
+        if (update.request_id == 0 && update.client_id != 0 && update.object) {
+            updates_mtx.lock();
+            updates.push_back(std::move(update.object));
+            updates_mtx.unlock();
+            --i;
             continue;
         }
 

@@ -7,5 +7,6 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace update {
+    void updates_broadcaster();
     td::ClientManager::Response send_request(td::td_api::object_ptr<td::td_api::Function> request, std::shared_ptr<td::ClientManager> client_ = nullptr, td::ClientManager::ClientId client_id_ = 0);
 }

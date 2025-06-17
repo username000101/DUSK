@@ -11,8 +11,8 @@
 #include <td/telegram/td_api.h>
 
 namespace events {
-    using EventSignature = td::td_api::object_ptr<td::td_api::Update>;
-    using ModifiedEventSignature = std::shared_ptr<td::td_api::Update>;
+    using EventSignature = td::td_api::object_ptr<td::td_api::Object>;
+    using ModifiedEventSignature = std::shared_ptr<td::td_api::Object>;
     using EventListenerSignature = bool(*)(ModifiedEventSignature);
     enum EventType { UPDATE_NEW_MESSAGE, UPDATE_EDIT_MESSAGE, };
 
@@ -28,7 +28,7 @@ namespace events {
         static bool append_listener(EventListenerSignature listener);
         static bool remove_listener(EventListenerSignature listener);
         static void automatic_broadcaster(std::chrono::milliseconds sleep_time);
-        static void append_update(td::td_api::object_ptr<td::td_api::Update> update);
+        static void append_update(td::td_api::object_ptr<td::td_api::Object>& update);
         static void broadcaster_stop() { broadcast_stop = true; }
     };
 }

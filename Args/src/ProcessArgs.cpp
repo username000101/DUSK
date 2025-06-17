@@ -6,8 +6,12 @@
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
 
+#include "Auth.hpp"
 #include "Callbacks.hpp"
 #include "Globals.hpp"
+#include "FS.hpp"
+#include "Loop.hpp"
+#include "Updates.hpp"
 
 namespace filesystem {
     void check_filesystem();
@@ -22,26 +26,32 @@ int args::process_args(int argc, char **argv) {
 
     auto user_param = DUSK.add_option("-u,--user", user,"Specify the user(chat_id)");
     user_param->type_name("INT64");
-    user_param->required();
 
     auto remove_user = DUSK.add_flag("-r,--remove", remove_user_flag, "Remove the specified user");
     remove_user->type_name("BOOL");
+    remove_user->needs(user_param);
 
     auto custom_cfg = DUSK.add_option("-f,--cfg,--config", custom_config_file, "Run DUSK with custom configuration file");
     custom_cfg->type_name("FILE");
+    custom_cfg->needs(user_param);
 
     DUSK.add_flag("-v,--version", show_version, "Show DUSK version");
 
     DUSK.add_flag("-w,--reinit", reinit_config_flag, "Restore the default config");
     DUSK.add_flag("-a,--update", update_config_flag, "Update the config");
 
-    DUSK.add_flag("-m,--modules", show_modules, "Show USER modules");
+    auto modules = DUSK.add_flag("-m,--modules", show_modules, "Show USER modules");
+    modules->needs(user_param);
 
     auto install = DUSK.add_option("-i,--install", install_file_path, "Install the specified module package");
     install->type_name("FILE");
+    install->needs(user_param);
 
     DUSK.callback([&] () {
         globals::current_user = user;
+        filesystem::check_filesystem();
+        std::thread updates_t([] () { update::updates_broadcaster(); });
+        updates_t.detach();
 
         if (show_version) /* --version */
             callbacks::show_version();
@@ -62,6 +72,12 @@ int args::process_args(int argc, char **argv) {
 
         if (!install_file_path.empty()) /* --install=FILE */
             callbacks::install(install_file_path);
+#if defined(DUSK_TDLIB_USE_TEST_DC)
+        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, 21768531, "b8a2f88bbb0416c8459182d99515170b", "ru_RU", "Linux", "Linux", "1.0.0");
+#else
+        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, 21768531, "b8a2f88bbb0416c8459182d99515170b", "ru_RU", "Linux", "Linux", "1.0.0");
+#endif
+        dusk::loop();
         spdlog::info("Not found any tasks(?)... Exit!");
     });
     CLI11_PARSE(DUSK, argc, argv);

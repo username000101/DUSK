@@ -9,8 +9,6 @@
 namespace auth {
     bool setTdlibParameters(std::shared_ptr<td::ClientManager> client,
                             bool use_test_dc,
-                            std::filesystem::path db_dir,
-                            std::filesystem::path files_dir,
                             bool use_files_db,
                             bool use_chat_info_db,
                             bool use_message_db,

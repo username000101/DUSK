@@ -16,3 +16,6 @@
 [submodule "third_party/json"]
 	path = third_party/json
 	url = https://github.com/nlohmann/json
+[submodule "third_party/mutex"]
+	path = third_party/mutex
+	url = https://github.com/yohhoy/yamc

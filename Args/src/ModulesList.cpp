@@ -10,6 +10,7 @@
 #include "Macros.hpp"
 
 void args::callbacks::modules_list(const std::int64_t& user_chat_id) {
+    std::cout << "MODULES" << std::endl;
     for (auto& user_dir : std::filesystem::directory_iterator(DUSK_ACCOUNTS)) {
         if (std::stoll(user_dir.path().filename().string()) != user_chat_id)
             continue;

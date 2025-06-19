@@ -6,12 +6,13 @@ void events::EventsInteractions::automatic_broadcaster(std::chrono::milliseconds
     broadcast_stop = false;
     while (!broadcast_stop) {
         if (!updates.empty()) {
-            std::shared_ptr<td::td_api::Object> update(updates.top().second.release());
+            auto upd_pair = std::move(updates.top());
             updates.pop();
+            std::shared_ptr<td::td_api::Object> update(std::move(upd_pair.second.release()));
 
             for (auto pair : listeners) {
-                if (pair.second) {
-                    std::thread callback([update, pair] () { pair.second(update); });
+                if (pair.second.first == upd_pair.first) {
+                    std::thread callback([update, pair] () { pair.second.second(update); });
                     callback.detach();
                 }
             }

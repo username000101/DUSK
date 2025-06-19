@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <stdexcept>
 
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
@@ -10,7 +11,7 @@
 #include "Callbacks.hpp"
 #include "Globals.hpp"
 #include "FS.hpp"
-#include "Loop.hpp"
+#include "Start.hpp"
 #include "Updates.hpp"
 
 namespace filesystem {
@@ -20,9 +21,10 @@ namespace filesystem {
 int args::process_args(int argc, char **argv) {
     CLI::App DUSK("Telegram userbot");
 
-    bool remove_user_flag = false, show_version = false, reinit_config_flag = false, update_config_flag = false, show_modules;
+    bool remove_user_flag = false, show_version = false, reinit_config_flag = false, update_config_flag = false, show_modules = false;
     std::int64_t user = 0;
     std::filesystem::path custom_config_file = "", install_file_path = "";
+    std::thread update_thread;
 
     auto user_param = DUSK.add_option("-u,--user", user,"Specify the user(chat_id)");
     user_param->type_name("INT64");
@@ -48,10 +50,11 @@ int args::process_args(int argc, char **argv) {
     install->needs(user_param);
 
     DUSK.callback([&] () {
+        if (user == 0 && (!show_version || !reinit_config_flag || !update_config_flag))
+            throw std::invalid_argument("The --user/-u parameter is required");
+
         globals::current_user = user;
         filesystem::check_filesystem();
-        std::thread updates_t([] () { update::updates_broadcaster(); });
-        updates_t.detach();
 
         if (show_version) /* --version */
             callbacks::show_version();
@@ -72,14 +75,18 @@ int args::process_args(int argc, char **argv) {
 
         if (!install_file_path.empty()) /* --install=FILE */
             callbacks::install(install_file_path);
+
+        update_thread = std::thread([] () { update::updates_broadcaster(); });
 #if defined(DUSK_TDLIB_USE_TEST_DC)
         auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, 21768531, "b8a2f88bbb0416c8459182d99515170b", "ru_RU", "Linux", "Linux", "1.0.0");
 #else
         auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, 21768531, "b8a2f88bbb0416c8459182d99515170b", "ru_RU", "Linux", "Linux", "1.0.0");
 #endif
-        dusk::loop();
+        dusk::start();
+        update_thread.join();
         spdlog::info("Not found any tasks(?)... Exit!");
     });
     CLI11_PARSE(DUSK, argc, argv);
+    spdlog::shutdown();
     return 0;
 }

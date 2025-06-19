@@ -1,7 +1,6 @@
 #include "Updates.hpp"
 
 #include <algorithm>
-#include <array>
 #include <chrono>
 #include <cstdint>
 #include <deque>
@@ -11,6 +10,8 @@
 #include <fair_mutex.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <td/telegram/Client.h>
+#include <td/telegram/td_api.h>
 
 #include "Events.hpp"
 
@@ -18,6 +19,9 @@ std::unordered_map<td::ClientManager::RequestId, td::ClientManager::Response> un
 
 std::deque<td::td_api::object_ptr<td::td_api::Object>> updates;
 yamc::fair::mutex updates_mtx;
+yamc::fair::mutex client_mtx;
+
+static std::shared_ptr<td::ClientManager> client;
 
 void update::updates_broadcaster() {
     static auto logger = std::make_shared<spdlog::logger>("Updates::updates_broadcaster", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
@@ -26,13 +30,25 @@ void update::updates_broadcaster() {
     logger->info("Updates and Events broadcasters has been runing");
 
     while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         if (!updates.empty()) {
-            std::lock_guard<yamc::fair::mutex> lock(updates_mtx);
+            updates_mtx.lock();
             auto update = std::move(updates.back());
-            events::EventsInteractions::append_update(update);
+            updates.pop_back();
+            updates_mtx.unlock();
+            events::EventsInteractions::append_update(std::move(update));
+        } else {
+            if (!client)
+                continue;
+            logger->debug("Attempt to find updates manually...");
+            client_mtx.lock();
+            auto update = client->receive(DUSK_TDLIB_TIMEOUT);
+            client_mtx.unlock();
+            if (update.request_id != 0 || !update.object)
+                continue;
+            events::EventsInteractions::append_update(std::move(update.object));
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
@@ -41,12 +57,12 @@ td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_a
         return {};
 
     static auto logger = std::make_shared<spdlog::logger>("Updates::send_request", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
-    static decltype(client_) client;
     if (!client) {
         logger->debug("Looks like this function running for the first time; initializing the client variable with value (addr){}",
                       reinterpret_cast<std::uintptr_t>(client_.get()));
         client = client_;
     }
+
     static std::int64_t request_id = 0;
     static td::ClientManager::ClientId client_id = 0;
     if (client_id == 0) {
@@ -64,16 +80,20 @@ td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_a
         unconfirmed_updates.erase(current_req_id);
         return result;
     }
+
     client->send(client_id, current_req_id, std::move(request));
 
     constexpr unsigned short attempts = 15;
-    constexpr double timeout = 15.0;
     for (auto i = attempts; i > 0; --i) {
         logger->trace("Trying to get response for request id: {}(attempt until fail: {})",
                       current_req_id, attempts - 1);
 
-        auto update = client->receive(timeout);
+        client_mtx.lock();
+        auto update = client->receive(DUSK_TDLIB_TIMEOUT);
+        client_mtx.unlock();
         if (update.request_id == 0 && update.client_id != 0 && update.object) {
+            logger->info("Received update: {}",
+                         update.object->get_id());
             updates_mtx.lock();
             updates.push_back(std::move(update.object));
             updates_mtx.unlock();

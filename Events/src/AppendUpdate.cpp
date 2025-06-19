@@ -1,7 +1,18 @@
 #include "Events.hpp"
 
-void events::EventsInteractions::append_update(td::td_api::object_ptr<td::td_api::Object>& update) {
+void events::EventsInteractions::append_update(td::td_api::object_ptr<td::td_api::Object>&& update) {
     if (!update)
         return;
-    updates.emplace(EventType::UPDATE_NEW_MESSAGE, std::move(update));
+    switch (update->get_id()) {
+        case td::td_api::updateNewMessage::ID:
+            updates.emplace(td::td_api::updateNewMessage::ID, std::move(update));
+            break;
+        case td::td_api::updateMessageEdited::ID:
+            updates.emplace(td::td_api::updateMessageEdited::ID, std::move(update));
+            break;
+        default:
+            logger->warn("Unknown EventType: {}",
+                         update->get_id());
+            break;
+    }
 }

@@ -4,120 +4,90 @@ project(
         VERSION 0.1
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frtti")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frtti -flto")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(FTXUI_ENABLE_INSTALL OFF)
+set(DUSK_TDLIB_USE_TEST_DC OFF)
 
 find_package(Td REQUIRED)
 
-function(add_definitions_to_targets)
-    set(options)
-    set(oneValueArgs)
-    set(multiValueArgs TARGETS DEFINITIONS)
-    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+file(GLOB Args "Args/include/*" "Args/src/*")
+add_subdirectory(Args/third_party/CLI11)
 
-    foreach(target IN LISTS ARG_TARGETS)
-        target_compile_definitions(${target} PUBLIC ${ARG_DEFINITIONS})
-    endforeach()
-endfunction()
+file(GLOB Auth "Auth/include/*" "Auth/src/*")
 
-function(add_compile_options_to_targets)
-    set(options)
-    set(oneValueArgs)
-    set(multiValueArgs TARGETS OPTIONS)
-    cmake_parse_arguments(ARG "${optioins}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+file(GLOB Events "Events/include/*" "Events/src/*")
 
-    foreach(target IN LISTS ARG_TARGETS)
-        target_compile_options(${target} PRIVATE ${ARG_OPTIONS})
-    endforeach()
-endfunction()
+file(GLOB Filesystem "Filesystem/include/*" "Filesystem/src/*")
+
+file(GLOB Modpack "Modpack/include/*" "Modpack/src/*")
+set(libarchive_library "/usr/lib/libarchive.so")
+add_subdirectory(Modpack/third_party/libarchive-cpp)
+
+file(GLOB Updates "Updates/include/*" "Updates/src/*")
+
+file(GLOB Utils "Utils/*")
 
 add_subdirectory(third_party/FTXUI)
 add_subdirectory(third_party/json)
-add_subdirectory(third_party/spdlog)
 add_subdirectory(third_party/mutex)
-
-file(GLOB Action_FILES "Updates/include/*" "Updates/src/*")
-add_library(tdaction SHARED ${Action_FILES}
-        Updates/src/Loop.cpp)
-target_include_directories(tdaction PUBLIC "Updates/include" "Events/include" "third_party/mutex/include" "Utils")
-target_link_libraries(tdaction PUBLIC Td::TdStatic events )
-
-file(GLOB Args_FILES "Args/include/*" "Args/src/*")
-add_library(args SHARED ${Args_FILES}
-        Utils/ConfirmDialog.hpp
-        Utils/Input.hpp
-        Updates/include/Loop.hpp)
-target_include_directories(args PUBLIC "Args/include" "Auth/include" "Filesystem/include" "Modpack/include" "Utils" "Updates/include")
-add_subdirectory(Args/third_party/CLI11)
-target_link_libraries(args PUBLIC CLI11::CLI11 ftxui::component ftxui::dom ftxui::screen Td::TdStatic nlohmann_json::nlohmann_json)
-
-file(GLOB Auth_FILES "Auth/include/*" "Auth/src/*")
-add_library(tdauth SHARED ${Auth_FILES})
-target_include_directories(tdauth PUBLIC "Auth/include" "Updates/include" "Utils")
-target_link_libraries(tdauth PUBLIC ftxui::component ftxui::dom ftxui::screen tdaction Td::TdStatic spdlog::spdlog)
-
-file(GLOB Events_FILES "Events/include/*" "Events/src/*")
-add_library(events SHARED ${Events_FILES})
-target_include_directories(events PUBLIC "Events/include")
-
-file(GLOB Filesystem_FILES "Filesystem/include/*" "Filesystem/src/*")
-add_library(filesystem SHARED ${Filesystem_FILES})
-if (NOT FS_DUSK_HOME)
-    message(FATAL_ERROR "You need to set the FS_DUSK_HOME variable")
-endif ()
-target_include_directories(filesystem PUBLIC "Filesystem/include" "Utils")
-target_link_libraries(filesystem PUBLIC spdlog::spdlog)
-
-file(GLOB Modpack_FILES "Modpack/include/*" "Modpack/src/*")
-add_library(modpack SHARED ${Modpack_FILES})
-target_include_directories(modpack PUBLIC "Modpack/include")
-add_subdirectory(Modpack/third_party/libarchive-cpp)
-target_link_libraries(modpack PUBLIC archive-cpp spdlog::spdlog)
-
-file(GLOB Utils_FILES "Utils/include/*")
+add_subdirectory(third_party/spdlog)
 
 add_executable(DUSK
-        main.cpp
-        ${Args_FILES}
-        ${Auth_FILES}
-        ${Events_FILES}
-        ${Filesystem_FILES}
-        ${Modpack_FILES}
-        ${Utils_FILES}
-)
-target_include_directories(DUSK PUBLIC "Auth/include" "Utils")
-target_compile_definitions(DUSK PUBLIC DUSK_VERSION="${PROJECT_VERSION}")
-target_link_libraries(DUSK PRIVATE args tdaction tdauth events filesystem spdlog::spdlog modpack)
-
-add_definitions_to_targets(
-        TARGETS args tdaction tdauth filesystem
-        DEFINITIONS DUSK_HOME="${FS_DUSK_HOME}" DUSK_CONFIG="${FS_DUSK_HOME}/config.json" DUSK_ACCOUNTS="${FS_DUSK_HOME}/accounts" DUSK_VERSION="${PROJECT_VERSION}"
+    ${Args}
+    ${Auth}
+    ${Events}
+    ${Filesystem}
+    ${Modpack}
+    ${Updates}
+    ${Utils}
+    main.cpp
 )
 
-if (WIN32)
-    add_definitions_to_targets(
-            TARGETS args modpack
-            DEFINITIONS DUSK_TMP="${FS_DUSK_HOME}/tmp"
-    )
+target_include_directories(
+        DUSK PRIVATE
+        "Args/include"
+        "Auth/include"
+        "Events/include"
+        "Filesystem/include"
+        "Modpack/include"
+        "Updates/include"
+        "Utils"
+
+        "third_party/mutex/include"
+)
+target_link_libraries(
+        DUSK PUBLIC
+        archive-cpp
+        CLI11::CLI11
+        ftxui::component
+        ftxui::dom
+        ftxui::screen
+        Td::TdStatic
+        nlohmann_json::nlohmann_json
+        spdlog::spdlog
+)
+target_compile_options(
+        DUSK PRIVATE
+        -flto
+)
+target_link_options(
+        DUSK PRIVATE
+        -Wl,--export-dynamic
+        -flto
+)
+
+if (NOT DEFINED FS_DUSK_HOME)
+    message(FATAL_ERROR "You need to specify the FS_DUSK_HOME variable")
 else ()
-    add_definitions_to_targets(
-            TARGETS args modpack
-            DEFINITIONS DUSK_TMP="/tmp/DUSK"
+    target_compile_definitions(
+            DUSK PRIVATE
+            DUSK_HOME="${FS_DUSK_HOME}"
+            DUSK_ACCOUNTS="${FS_DUSK_HOME}/accounts"
+            DUSK_CONFIG="${FS_DUSK_HOME}/config.json"
+            DUSK_VERSION="${PROJECT_VERSION}"
+            DUSK_TMP="/tmp/DUSK"
+            DUSK_TDLIB_TIMEOUT=5.0
     )
-endif ()
-
-if (DUSK_TDLIB_USE_TEST_DC)
-    message(STATUS "Using test dc for setTdlibParameters")
-    add_definitions_to_targets(
-            TARGETS args DUSK tdauth
-            DEFINITIONS DUSK_TDLIB_USE_TEST_DC=true
-    )
-endif ()
-
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set(DEBUG_CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic")
-    message(NOTICE "Debug build, new CMAKE_CXX_FLAGS: ${DEBUG_CMAKE_CXX_FLAGS}")
-    set(CMAKE_CXX_FLAGS ${DEBUG_CMAKE_CXX_FLAGS})
 endif ()

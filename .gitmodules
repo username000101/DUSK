@@ -19,6 +19,3 @@
 [submodule "third_party/mutex"]
 	path = third_party/mutex
 	url = https://github.com/yohhoy/yamc
-[submodule "third_party/tdlib"]
-	path = third_party/tdlib
-	url = https://github.com/tdlib/td

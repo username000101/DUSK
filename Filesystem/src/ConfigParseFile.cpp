@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
+#include "Globals.hpp"
 #include "Macros.hpp"
 
 config::Configuration config::Configuration::parse_file(const std::filesystem::path &file) {

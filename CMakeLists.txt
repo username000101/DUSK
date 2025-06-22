@@ -26,6 +26,7 @@ file(GLOB Updates "Updates/include/*" "Updates/src/*")
 
 file(GLOB Utils "Utils/*")
 
+add_subdirectory(third_party/CLI11)
 add_subdirectory(third_party/FTXUI)
 add_subdirectory(third_party/json)
 add_subdirectory(third_party/mutex)
@@ -66,10 +67,6 @@ target_link_libraries(
         spdlog::spdlog
 )
 if (NOT MSVC)
-    target_compile_options(
-            DUSK PRIVATE
-            -flto
-    )
     target_link_options(
             DUSK PRIVATE
             -Wl,--export-dynamic

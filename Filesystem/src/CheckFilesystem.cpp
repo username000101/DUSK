@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <fstream>
 
-#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #include "Globals.hpp"

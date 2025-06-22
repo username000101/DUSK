@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-std::string input(const std::string& promt) {
+inline std::string input(const std::string& promt) {
 	std::cout << promt;
 	std::string buffer;
 	do {

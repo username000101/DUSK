@@ -11,7 +11,7 @@ void events::EventsInteractions::append_update(td::td_api::object_ptr<td::td_api
             updates.emplace(td::td_api::updateMessageEdited::ID, std::move(update));
             break;
         default:
-            logger->warn("Unknown EventType: {}",
+            spdlog::debug("Unknown EventType: {}",
                          update->get_id());
             break;
     }

@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include <FTXUI/component/component.hpp>
-#include <FTXUI/component/screen_interactive.hpp>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/screen_interactive.hpp>
 
 
 inline bool confirm(const std::string& promt) {

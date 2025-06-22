@@ -12,7 +12,6 @@ set(DUSK_TDLIB_USE_TEST_DC OFF)
 find_package(Td REQUIRED)
 
 file(GLOB Args "Args/include/*" "Args/src/*")
-add_subdirectory(Args/third_party/CLI11)
 
 file(GLOB Auth "Auth/include/*" "Auth/src/*")
 

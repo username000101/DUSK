@@ -7,9 +7,6 @@
 [submodule "third_party/CLI11"]
 	path = third_party/CLI11
 	url = https://github.com/CLIUtils/CLI11
-[submodule "Args/third_party/CLI11"]
-	path = Args/third_party/CLI11
-	url = https://github.com/CLIUtils/CLI11
 [submodule "third_party/FTXUI"]
 	path = third_party/FTXUI
 	url = https://github.com/ArthurSonzogni/FTXUI
@@ -18,7 +15,4 @@
 	url = https://github.com/nlohmann/json
 [submodule "third_party/mutex"]
 	path = third_party/mutex
-	url = https://github.com/yohhoy/yamc
-[submodule "third_party/tdlib"]
-	path = third_party/tdlib
-	url = https://github.com/tdlib/td
+	url = https://github.com/username000101/yamc

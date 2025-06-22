@@ -15,4 +15,4 @@
 	url = https://github.com/nlohmann/json
 [submodule "third_party/mutex"]
 	path = third_party/mutex
-	url = https://github.com/yohhoy/yamc
+	url = https://github.com/username000101/yamc

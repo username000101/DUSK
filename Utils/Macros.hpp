@@ -4,7 +4,7 @@
 #define DUSK_EXPORT __declspec(dllexport)
 #else
 #define FUNCSIG __PRETTY_FUNCTION__
-#define LIT_EXPORT __attribute__((visibility("default")))
+#define DUSK_EXPORT __attribute__((visibility("default")))
 #endif
 
 #define DUSK_LOGO \

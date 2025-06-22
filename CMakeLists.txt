@@ -4,7 +4,6 @@ project(
         VERSION 0.1
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frtti -flto")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(FTXUI_ENABLE_INSTALL OFF)
@@ -22,7 +21,6 @@ file(GLOB Events "Events/include/*" "Events/src/*")
 file(GLOB Filesystem "Filesystem/include/*" "Filesystem/src/*")
 
 file(GLOB Modpack "Modpack/include/*" "Modpack/src/*")
-set(libarchive_library "/usr/lib/libarchive.so")
 add_subdirectory(Modpack/third_party/libarchive-cpp)
 
 file(GLOB Updates "Updates/include/*" "Updates/src/*")
@@ -68,18 +66,19 @@ target_link_libraries(
         nlohmann_json::nlohmann_json
         spdlog::spdlog
 )
-target_compile_options(
-        DUSK PRIVATE
-        -flto
-)
-target_link_options(
-        DUSK PRIVATE
-        -Wl,--export-dynamic
-        -flto
-)
+if (NOT MSVC)
+    target_compile_options(
+            DUSK PRIVATE
+            -flto
+    )
+    target_link_options(
+            DUSK PRIVATE
+            -Wl,--export-dynamic
+    )
+endif ()
 
-if (NOT DEFINED FS_DUSK_HOME)
-    message(FATAL_ERROR "You need to specify the FS_DUSK_HOME variable")
+if (NOT DEFINED FS_DUSK_HOME OR NOT DEFINED API_ID OR NOT DEFINED API_HASH)
+    message(FATAL_ERROR "You need to specify the FS_DUSK_HOME, API_ID and API_HASH variables")
 else ()
     target_compile_definitions(
             DUSK PRIVATE
@@ -89,5 +88,7 @@ else ()
             DUSK_VERSION="${PROJECT_VERSION}"
             DUSK_TMP="/tmp/DUSK"
             DUSK_TDLIB_TIMEOUT=5.0
+            API_ID=${API_ID}
+            API_HASH="${API_HASH}"
     )
 endif ()

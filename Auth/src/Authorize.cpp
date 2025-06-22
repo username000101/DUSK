@@ -49,12 +49,8 @@ bool auth::authorize() {
         if (phone_number.empty()) {
             std::cout << "Incorrect input, please try again" << std::endl;
             continue;
-        } else {
-            if (true)
-                break;
-            else
-                continue;
         }
+        if (confirm("\"" + phone_number + "\" - correct?")) break;
     }
 
     for (int attempt = 1; attempt <= 5; ++attempt) {
@@ -81,12 +77,10 @@ bool auth::authorize() {
         if (code.empty()) {
             std::cout << "Incorrect input, please try again" << std::endl;
             continue;
-        } else {
-            if (true)
-                break;
-            else
-                continue;
         }
+        if (confirm("\"" + code + "\" - correct?"))
+            break;
+
     }
 
     for (int attempt = 1; attempt <= 5; ++attempt) {

@@ -50,7 +50,7 @@ int args::process_args(int argc, char **argv) {
     install->needs(user_param);
 
     DUSK.callback([&] () {
-        if (user == 0 && (!show_version || !reinit_config_flag || !update_config_flag))
+        if (user == 0 && (!show_version && !reinit_config_flag && !update_config_flag))
             throw std::invalid_argument("The --user/-u parameter is required");
 
         globals::current_user = user;
@@ -78,9 +78,9 @@ int args::process_args(int argc, char **argv) {
 
         update_thread = std::thread([] () { update::updates_broadcaster(); });
 #if defined(DUSK_TDLIB_USE_TEST_DC)
-        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, 21768531, "b8a2f88bbb0416c8459182d99515170b", "ru_RU", "Linux", "Linux", "1.0.0");
+        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, API_ID, API_HASH, "ru_RU", "Linux", "Linux", "1.0.0");
 #else
-        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, 21768531, "b8a2f88bbb0416c8459182d99515170b", "ru_RU", "Linux", "Linux", "1.0.0");
+        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, API_ID, API_HASH, "ru_RU", "Linux", "Linux", "1.0.0");
 #endif
         dusk::start();
         update_thread.join();

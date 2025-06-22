@@ -5,11 +5,11 @@
 #include <iostream>
 #include <memory>
 
-#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <td/telegram/td_api.h>
 
+#include "Auth.hpp"
 #include "Configuration.hpp"
 #include "Events.hpp"
 #include "Globals.hpp"
@@ -35,6 +35,22 @@ bool on_new_message_handler(std::shared_ptr<td::td_api::Object> update) {
 
 void dusk::start() {
     static auto logger = std::make_shared<spdlog::logger>("DUSK::start", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+
+    spdlog::debug("Trying to get current authorization state...");
+    while (true) {
+        auto current_authorization_state = update::send_request(td::td_api::make_object<td::td_api::getAuthorizationState>());
+        if (!current_authorization_state.object) {
+            logger->warn("Failed to get current authorization state: response::object is null");
+            continue;
+        }
+
+        if (current_authorization_state.object->get_id() != td::td_api::authorizationStateReady::ID) {
+            auth::authorize();
+            break;
+        }
+        spdlog::debug("Current authorization state is authorizationStateReady");
+        break;
+    }
 
     logger->info("DUSK is launched!");
 

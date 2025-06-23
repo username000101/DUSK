@@ -25,7 +25,7 @@ namespace modpack {
 
         if (result.contains("prebuilt")) {
             std::string prebuilt_str = result.at("prebuilt").second;
-            std::filesystem::path current_platform_library;
+            std::filesystem::path current_platform_library, source_path, target_path;
             auto prebuilt = nlohmann::json::parse(prebuilt_str);
 #if defined(__linux__)
             if (!prebuilt.contains("linux")) {
@@ -34,9 +34,11 @@ namespace modpack {
                 return false;
             }
             current_platform_library = modpack_obj.get_extracted_directory() / prebuilt.at("linux").template get<std::string>();
-            if (!std::filesystem::exists(current_platform_library)) {
+            target_path = std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "modules" / current_platform_library.filename();
+            source_path = modpack_obj.get_extracted_directory() / current_platform_library;
+            if (!std::filesystem::exists(source_path)) {
                 spdlog::error("{}: Library for current platform(linux) is set but doesn't exist({})",
-                              FUNCSIG, current_platform_library);
+                              FUNCSIG, current_platform_library.string());
                 return false;
             }
 #elif defined(_WIN32)
@@ -46,9 +48,9 @@ namespace modpack {
                 return false;
             }
             current_platform_library = prebuilt.at("windows").get<std::filesystem::path>();
-            auto target_path = std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "modules" / current_platform_library.filename();
-            auto source_path = modpack_obj.get_extracted_directory() / current_platform_library;
-            if (!std::filesystem::exists(modpack_obj.get_extracted_directory() / current_platform_library)) {
+            target_path = std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "modules" / current_platform_library.filename();
+            source_path = modpack_obj.get_extracted_directory() / current_platform_library;
+            if (!std::filesystem::exists(source_path)) {
                 spdlog::error("{}: Library for current platform(windows) is set but doesn't exist({})",
                               FUNCSIG, current_platform_library.string());
                 return false;

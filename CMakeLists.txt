@@ -75,16 +75,32 @@ endif ()
 
 if (NOT DEFINED FS_DUSK_HOME OR NOT DEFINED API_ID OR NOT DEFINED API_HASH)
     message(FATAL_ERROR "You need to specify the FS_DUSK_HOME, API_ID and API_HASH variables")
+endif ()
+
+target_compile_definitions(
+        DUSK PRIVATE
+        DUSK_HOME="${FS_DUSK_HOME}"
+        DUSK_ACCOUNTS="${FS_DUSK_HOME}/accounts"
+        DUSK_CONFIG="${FS_DUSK_HOME}/config.json"
+        DUSK_VERSION="${PROJECT_VERSION}"
+        DUSK_TDLIB_TIMEOUT=5.0
+        API_ID=${API_ID}
+        API_HASH="${API_HASH}"
+)
+
+if (LINUX)
+    target_compile_definitions(
+            DUSK PRIVATE
+            DUSK_TMP="/tmp/DUSK"
+    )
+elseif (ANDROID)
+    target_compile_definitions(
+            DUSK PRIVATE
+            DUSK_TMP="$ENV{HOME}/dusk_tmp"
+    )
 else ()
     target_compile_definitions(
             DUSK PRIVATE
-            DUSK_HOME="${FS_DUSK_HOME}"
-            DUSK_ACCOUNTS="${FS_DUSK_HOME}/accounts"
-            DUSK_CONFIG="${FS_DUSK_HOME}/config.json"
-            DUSK_VERSION="${PROJECT_VERSION}"
-            DUSK_TMP="/tmp/DUSK"
-            DUSK_TDLIB_TIMEOUT=5.0
-            API_ID=${API_ID}
-            API_HASH="${API_HASH}"
+            DUSK_TMP="${FS_DUSK_HOME}/tmp"
     )
 endif ()

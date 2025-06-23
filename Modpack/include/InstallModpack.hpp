@@ -24,7 +24,8 @@ namespace modpack {
         }
 
         if (result.contains("prebuilt")) {
-            std::string current_platform_library, prebuilt_str = result.at("prebuilt").second;
+            std::string prebuilt_str = result.at("prebuilt").second;
+            std::filesystem::path current_platform_library;
             auto prebuilt = nlohmann::json::parse(prebuilt_str);
 #if defined(__linux__)
             if (!prebuilt.contains("linux")) {
@@ -39,23 +40,25 @@ namespace modpack {
                 return false;
             }
 #elif defined(_WIN32)
-            if (prebuilt.contains("windows")) {
-                spdlog::error("{}: Not found prebuilt libs for current(linux) platform",
+            if (!prebuilt.contains("windows")) {
+                spdlog::error("{}: Not found prebuilt libs for current(windows) platform",
                               FUNCSIG);
                 return false;
             }
-            current_platform_library = prebuilt.at("windows").get<std::string>();
-            if (!std::filesystem::exists(current_platform_library)) {
-                spdlog::error("{}: Library for current platform(linux) is set but doesn't exist({})",
-                              FUNCSIG, current_platform_library);
+            current_platform_library = prebuilt.at("windows").get<std::filesystem::path>();
+            auto target_path = std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "modules" / current_platform_library.filename();
+            auto source_path = modpack_obj.get_extracted_directory() / current_platform_library;
+            if (!std::filesystem::exists(modpack_obj.get_extracted_directory() / current_platform_library)) {
+                spdlog::error("{}: Library for current platform(windows) is set but doesn't exist({})",
+                              FUNCSIG, current_platform_library.string());
                 return false;
             }
 #else
 #error "Current platform is not supported now"
 #endif
             spdlog::info("{}: Copying library {}",
-                         FUNCSIG, current_platform_library);
-            std::filesystem::copy(current_platform_library, std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "modules");
+                         FUNCSIG, current_platform_library.string());
+            std::filesystem::copy(source_path, target_path);
             return true;
         }
         return false;

@@ -3,6 +3,7 @@
 #include <exception>
 #include <spdlog/spdlog.h>
 
+#include "FS.hpp"
 #include "Macros.hpp"
 
 inline void terminate_handler_f() {
@@ -12,9 +13,10 @@ inline void terminate_handler_f() {
     } catch (std::exception& error) {
         spdlog::error("{}: Exception: {}",
                       FUNCSIG, error.what());
-        std::exit(-1);
     } catch (...) {
         spdlog::error("{}: Exception: UNKNOWN");
-        std::exit(-2);
     }
+
+    filesystem::clean_env();
+    std::exit(3);
 }

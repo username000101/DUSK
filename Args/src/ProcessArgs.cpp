@@ -87,6 +87,7 @@ int args::process_args(int argc, char **argv) {
         spdlog::info("Not found any tasks(?)... Exit!");
     });
     CLI11_PARSE(DUSK, argc, argv);
+    filesystem::clean_env();
     spdlog::shutdown();
     return 0;
 }

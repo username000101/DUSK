@@ -55,7 +55,7 @@ namespace modpack {
 #endif
             spdlog::info("{}: Copying library {}",
                          FUNCSIG, current_platform_library);
-            std::filesystem::copy(current_platform_library, std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "mods");
+            std::filesystem::copy(current_platform_library, std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "modules");
             return true;
         }
         return false;

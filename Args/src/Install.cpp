@@ -11,4 +11,5 @@ void args::callbacks::install(const std::filesystem::path& file) {
     }
 
     modpack::install_modpack<std::map>(file);
+    std::exit(0);
 }

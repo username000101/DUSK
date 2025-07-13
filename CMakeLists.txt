@@ -19,6 +19,8 @@ file(GLOB Events "Events/include/*" "Events/src/*")
 
 file(GLOB Filesystem "Filesystem/include/*" "Filesystem/src/*")
 
+file(GLOB Server_RPC "Server/RPC/include/*" "Server/RPC/src/*")
+
 file(GLOB Modpack "Modpack/include/*" "Modpack/src/*")
 
 file(GLOB Updates "Updates/include/*" "Updates/src/*")
@@ -38,6 +40,7 @@ add_executable(DUSK
     ${Auth}
     ${Events}
     ${Filesystem}
+    ${Server_RPC}
     ${Modpack}
     ${Updates}
     ${Utils}
@@ -50,6 +53,7 @@ target_include_directories(
         "Auth/include"
         "Events/include"
         "Filesystem/include"
+        "Server/RPC/include"
         "Modpack/include"
         "Updates/include"
         "Utils"

@@ -13,3 +13,6 @@
 [submodule "third_party/mutex"]
 	path = third_party/mutex
 	url = https://github.com/username000101/yamc
+[submodule "third_party/libarchive-cpp"]
+	path = third_party/libarchive-cpp
+	url = https://github.com/username000101/libarchive-cpp

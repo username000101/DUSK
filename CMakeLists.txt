@@ -20,7 +20,6 @@ file(GLOB Events "Events/include/*" "Events/src/*")
 file(GLOB Filesystem "Filesystem/include/*" "Filesystem/src/*")
 
 file(GLOB Modpack "Modpack/include/*" "Modpack/src/*")
-add_subdirectory(Modpack/third_party/libarchive-cpp)
 
 file(GLOB Updates "Updates/include/*" "Updates/src/*")
 
@@ -29,6 +28,7 @@ file(GLOB Utils "Utils/*")
 add_subdirectory(third_party/CLI11)
 add_subdirectory(third_party/FTXUI)
 add_subdirectory(third_party/json)
+add_subdirectory(third_party/libarchive-cpp)
 add_subdirectory(third_party/mutex)
 add_subdirectory(third_party/spdlog)
 

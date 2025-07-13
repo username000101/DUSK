@@ -4,12 +4,14 @@
 #include <spdlog/spdlog.h>
 
 #include "FS.hpp"
+#include "RPCServer.hpp"
 #include "Macros.hpp"
 
 inline void shutdown(int rcode, const std::string& message = "") noexcept {
     if (!message.empty())
         spdlog::info("{}: {}",
             "Shutdown", message);
+    server::rpc::shutdown_rpc_server();
     filesystem::clean_env();
     spdlog::shutdown();
     std::exit(rcode);

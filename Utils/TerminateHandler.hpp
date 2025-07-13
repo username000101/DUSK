@@ -6,6 +6,15 @@
 #include "FS.hpp"
 #include "Macros.hpp"
 
+inline void shutdown(int rcode, const std::string& message = "") noexcept {
+    if (!message.empty())
+        spdlog::info("{}: {}",
+            "Shutdown", message);
+    filesystem::clean_env();
+    spdlog::shutdown();
+    std::exit(rcode);
+}
+
 inline void terminate_handler_f() {
     auto current_exc = std::current_exception();
     try {

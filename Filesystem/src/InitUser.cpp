@@ -11,7 +11,8 @@ void filesystem::init_user() {
         auto user_dir = std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user);
         std::filesystem::create_directories(user_dir);
         std::filesystem::create_directory(user_dir / "modules");
-
+        std::filesystem::create_directory(user_dir / "database");
+        std::filesystem::create_directory(user_dir / "files");
         if (!std::filesystem::exists(std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "config.json")) {
             {
                 std::ofstream config_file(std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "config.json");

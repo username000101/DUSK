@@ -28,6 +28,7 @@ file(GLOB Utils "Utils/*")
 add_subdirectory(third_party/CLI11)
 add_subdirectory(third_party/FTXUI)
 add_subdirectory(third_party/json)
+add_subdirectory(third_party/rpc)
 add_subdirectory(third_party/libarchive-cpp)
 add_subdirectory(third_party/mutex)
 add_subdirectory(third_party/spdlog)
@@ -54,6 +55,7 @@ target_include_directories(
         "Utils"
 
         "third_party/mutex/include"
+        "third_party/rpc/include"
 )
 target_link_libraries(
         DUSK PUBLIC
@@ -62,6 +64,7 @@ target_link_libraries(
         ftxui::component
         ftxui::dom
         ftxui::screen
+        rpc
         Td::TdStatic
         nlohmann_json::nlohmann_json
         spdlog::spdlog

@@ -1,6 +1,3 @@
-[submodule "Modpack/third_party/libarchive-cpp"]
-	path = Modpack/third_party/libarchive-cpp
-	url = https://github.com/username000101/libarchive-cpp
 [submodule "third_party/spdlog"]
 	path = third_party/spdlog
 	url = https://github.com/gabime/spdlog

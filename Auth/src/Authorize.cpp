@@ -119,16 +119,65 @@ bool auth::authorize() {
                     break;
                 }
                 case td::td_api::authorizationStateReady::ID:
-                    break;
+                    return true;
             }
             break;
         }
     }
 
-    if (have_password) {
-        std::cout << "Is not implemented yet" << std::endl;
-        std::exit(0);
-    } else
-        return true;
+    while (true) {
+        password = input("Password(" + password_hint + "): ");
+        if (password.empty()) {
+            std::cout << "Incorrect input, please try again" << std::endl;
+            continue;
+        }
+        if (confirm("\"" + password + "\" - correct?"))
+            break;
+
+    }
+
+    for (int attempt = 1; attempt <= 5; ++attempt) {
+        auto password_result = update::send_request(td::td_api::make_object<td::td_api::checkAuthenticationPassword>(password));
+        if (!password_result.object) {
+            logger->warn("Returned invalid response; trying again({} attempts left)",
+                5 - attempt);
+            continue;
+        }
+        else if (attempt == 5) {
+            logger->critical("Attempts ended, aborting");
+            std::exit(-1);
+        }
+        else {
+            if (password_result.object->get_id() == td::td_api::error::ID) {
+                auto error = td::move_tl_object_as<td::td_api::error>(password_result.object);
+                logger->warn("Returned error: '{}', trying again({} attempts left)",
+                    error->message_, 5 - attempt);
+            } else
+                break;
+        }
+    }
+
+    for (int attempt = 1; attempt <= 5; ++attempt) {
+        auto current_authorization_state = update::send_request(td::td_api::make_object<td::td_api::getAuthorizationState>());
+        if (!current_authorization_state.object) {
+            logger->warn("Returned invalid response; trying again({} attempts left)",
+                5 - attempt);
+            continue;
+        }
+        else if (attempt == 5) {
+            logger->critical("Attempts ended, aborting");
+            std::exit(-1);
+        }
+        else {
+            switch (current_authorization_state.object->get_id()) {
+                case td::td_api::authorizationStateReady::ID:
+                    return true;
+                default:
+                    logger->error("Unexpected case: {}; trying again({} attempts left)",
+                        current_authorization_state.object->get_id(), 5 - attempt);
+                    break;
+            }
+        }
+    }
 
 }

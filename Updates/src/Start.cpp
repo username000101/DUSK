@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 
+#include <rpc/server.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <td/telegram/td_api.h>
@@ -36,7 +37,6 @@ void dusk::start() {
     }
 
     logger->info("DUSK is launched!");
-
     auto get_me_res = update::send_request(td::td_api::make_object<td::td_api::getMe>());
     if (get_me_res.object) {
         auto get_me = td::move_tl_object_as<td::td_api::user>(get_me_res.object);
@@ -61,4 +61,8 @@ void dusk::start() {
         shutdown(EXIT_FAILURE);
     }
     logger->info("Configuration was succefully loaded!");
+
+    rpc::server server(5000);
+    std::thread server_thread([&server] { server.run(); });
+    server_thread.join();
 }

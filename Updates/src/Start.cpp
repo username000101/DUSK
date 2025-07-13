@@ -14,6 +14,7 @@
 #include "Configuration.hpp"
 #include "Events.hpp"
 #include "Globals.hpp"
+#include "RPCServer.hpp"
 #include "TerminateHandler.hpp"
 #include "Updates.hpp"
 
@@ -53,16 +54,12 @@ void dusk::start() {
                  account_details);
     }
 
-    logger->info("Loading configuration...",
-                 globals::current_user);
     globals::configuration = std::make_shared<config::Configuration>(config::Configuration::parse_file(DUSK_CONFIG));
     if (globals::configuration->users.empty()) {
         logger->error("No users found! Please update DUSK configuration file");
         shutdown(EXIT_FAILURE);
     }
-    logger->info("Configuration was succefully loaded!");
+    logger->info("Configuration was successfully loaded!");
 
-    rpc::server server(5000);
-    std::thread server_thread([&server] { server.run(); });
-    server_thread.join();
+    server::rpc::up_rpc_server();
 }

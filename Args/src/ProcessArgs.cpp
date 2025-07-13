@@ -76,6 +76,7 @@ int args::process_args(int argc, char **argv) {
         if (!install_file_path.empty()) /* --install=FILE */
             callbacks::install(install_file_path);
 
+        filesystem::init_user();
         update_thread = std::thread([] () { update::updates_broadcaster(); });
 #if defined(DUSK_TDLIB_USE_TEST_DC)
         auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, API_ID, API_HASH, "ru_RU", "Linux", "Linux", "1.0.0");

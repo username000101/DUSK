@@ -61,5 +61,8 @@ void dusk::start() {
     }
     logger->info("Configuration was successfully loaded!");
 
+    logger->info("Raising up modules...");
+    globals::configuration->current_user.load_modules();
+
     server::rpc::up_rpc_server();
 }

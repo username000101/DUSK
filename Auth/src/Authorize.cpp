@@ -179,5 +179,5 @@ bool auth::authorize() {
             }
         }
     }
-
+    return true;
 }

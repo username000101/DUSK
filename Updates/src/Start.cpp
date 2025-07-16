@@ -62,14 +62,14 @@ void dusk::start() {
         shutdown(EXIT_FAILURE);
     }
     logger->info("Configuration was successfully loaded!");
+    
+    server::rpc::up_rpc_server();
 
     logger->info("Raising up modules...");
     globals::configuration->current_user.load_modules();
 
     update_thread = std::thread([] () { update::updates_broadcaster(); });
     update_thread.detach();
-
-    server::rpc::up_rpc_server();
 
     while (true) {
 

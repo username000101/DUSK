@@ -12,6 +12,7 @@
 #include "Globals.hpp"
 #include "FS.hpp"
 #include "Start.hpp"
+#include "TerminateHandler.hpp"
 #include "Updates.hpp"
 
 namespace filesystem {
@@ -82,10 +83,8 @@ int args::process_args(int argc, char **argv) {
         auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, API_ID, API_HASH, "ru_RU", "Linux", "Linux", "1.0.0");
 #endif
         dusk::start();
-        spdlog::info("Not found any tasks(?)... Exit!");
     });
     CLI11_PARSE(DUSK, argc, argv);
-    filesystem::clean_env();
-    spdlog::shutdown();
+    shutdown(0, "Not found any tasks(?)... Exit!");
     return 0;
 }

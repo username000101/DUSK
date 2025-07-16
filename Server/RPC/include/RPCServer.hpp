@@ -7,6 +7,9 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+/* Commands */
+#include "CommandVersion.hpp"
+/* -------- */
 #include "Globals.hpp"
 
 static auto logger = std::make_shared<spdlog::logger>("RPC Server", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
@@ -15,6 +18,9 @@ namespace server {
     namespace rpc {
         inline void up_rpc_server(std::uint16_t port = 5000) {
             globals::rpc_server = std::make_shared<::rpc::server>(port);
+
+            globals::rpc_server->bind("dusk.version", dusk_rpc_server_command_version);
+
             std::thread rpc_server_thread([] { globals::rpc_server->run(); });
             logger->info("RPC server has been started on port {}",
                 port);

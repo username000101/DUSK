@@ -1,18 +1,21 @@
 #pragma once
 
+#include <algorithm>
 #include <exception>
 #include <spdlog/spdlog.h>
 
 #include "FS.hpp"
+#include "Globals.hpp"
 #include "RPCServer.hpp"
 #include "Macros.hpp"
 
 inline void shutdown(int rcode, const std::string& message = "") noexcept {
     if (!message.empty())
         spdlog::info("{}: {}",
-            "Shutdown", message);
+            FUNCSIG, message);
     server::rpc::shutdown_rpc_server();
     filesystem::clean_env();
+    std::ranges::for_each(globals::detached_processes, [](auto& process) { process.kill(); });
     spdlog::shutdown();
     std::exit(rcode);
 }

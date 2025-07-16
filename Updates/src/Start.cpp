@@ -70,4 +70,8 @@ void dusk::start() {
     update_thread.detach();
 
     server::rpc::up_rpc_server();
+
+    while (true) {
+
+    }
 }

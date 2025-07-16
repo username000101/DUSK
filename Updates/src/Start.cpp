@@ -21,6 +21,8 @@
 void dusk::start() {
     static auto logger = std::make_shared<spdlog::logger>("DUSK::start", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
 
+    std::thread update_thread;
+
     spdlog::debug("Trying to get current authorization state...");
     while (true) {
         auto current_authorization_state = update::send_request(td::td_api::make_object<td::td_api::getAuthorizationState>());
@@ -63,6 +65,9 @@ void dusk::start() {
 
     logger->info("Raising up modules...");
     globals::configuration->current_user.load_modules();
+
+    update_thread = std::thread([] () { update::updates_broadcaster(); });
+    update_thread.detach();
 
     server::rpc::up_rpc_server();
 }

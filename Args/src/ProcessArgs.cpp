@@ -24,7 +24,6 @@ int args::process_args(int argc, char **argv) {
     bool remove_user_flag = false, show_version = false, reinit_config_flag = false, update_config_flag = false, show_modules = false;
     std::int64_t user = 0;
     std::filesystem::path custom_config_file = "", install_file_path = "";
-    std::thread update_thread;
 
     auto user_param = DUSK.add_option("-u,--user", user,"Specify the user(chat_id)");
     user_param->type_name("INT64");
@@ -77,14 +76,12 @@ int args::process_args(int argc, char **argv) {
             callbacks::install(install_file_path);
 
         filesystem::init_user();
-        update_thread = std::thread([] () { update::updates_broadcaster(); });
 #if defined(DUSK_TDLIB_USE_TEST_DC)
         auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, API_ID, API_HASH, "ru_RU", "Linux", "Linux", "1.0.0");
 #else
         auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, API_ID, API_HASH, "ru_RU", "Linux", "Linux", "1.0.0");
 #endif
         dusk::start();
-        update_thread.join();
         spdlog::info("Not found any tasks(?)... Exit!");
     });
     CLI11_PARSE(DUSK, argc, argv);

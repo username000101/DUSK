@@ -34,6 +34,8 @@ add_subdirectory(third_party/rpc)
 add_subdirectory(third_party/libarchive-cpp)
 add_subdirectory(third_party/mutex)
 add_subdirectory(third_party/spdlog)
+set(BUILD_TESTING OFF)
+add_subdirectory(third_party/subprocess)
 
 add_executable(DUSK
     ${Args}
@@ -60,6 +62,7 @@ target_include_directories(
 
         "third_party/mutex/include"
         "third_party/rpc/include"
+        "third_party/subprocess/src/cpp"
 )
 target_link_libraries(
         DUSK PUBLIC
@@ -72,13 +75,8 @@ target_link_libraries(
         Td::TdStatic
         nlohmann_json::nlohmann_json
         spdlog::spdlog
+        subprocess
 )
-if (NOT MSVC)
-    target_link_options(
-            DUSK PRIVATE
-            -Wl,--export-dynamic
-    )
-endif ()
 
 if (NOT DEFINED FS_DUSK_HOME OR NOT DEFINED API_ID OR NOT DEFINED API_HASH)
     message(FATAL_ERROR "You need to specify the FS_DUSK_HOME, API_ID and API_HASH variables")

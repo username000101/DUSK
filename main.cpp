@@ -18,6 +18,7 @@ int main(int argc, char** argv) {
     spdlog::flush_on(spdlog::level::info);
 #endif
 
+    std::signal(SIGINT, signal_handler_f);
     std::set_terminate(terminate_handler_f);
     std::cout << DUSK_LOGO << std::endl << std::endl;
     args::process_args(argc, argv);

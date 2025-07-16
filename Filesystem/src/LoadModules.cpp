@@ -1,5 +1,6 @@
 #include "Configuration.hpp"
 
+#include <chrono>
 #include <optional>
 #include <thread>
 #include <unordered_map>
@@ -65,6 +66,7 @@ void config::UserConfiguration::load_modules() {
         if (prefix_table.contains(module.file.extension().string()))
             prefix = prefix_table.at(module.file.extension().string());
         globals::detached_processes.push_back(subprocess::RunBuilder({prefix, module.file.string()}).popen());
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         std::shared_ptr<rpc::client> module_rpc_test;
 

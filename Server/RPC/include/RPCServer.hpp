@@ -8,6 +8,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 /* Commands */
+#include "CommandModule.hpp"
 #include "CommandVersion.hpp"
 /* -------- */
 #include "Globals.hpp"
@@ -20,6 +21,7 @@ namespace server {
             globals::rpc_server = std::make_shared<::rpc::server>(port);
 
             globals::rpc_server->bind("dusk.version", dusk_rpc_server_command_version);
+            globals::rpc_server->bind("dusk.module", dusk_rpc_server_command_module);
 
             std::thread rpc_server_thread([] { globals::rpc_server->run(); });
             logger->info("RPC server has been started on port {}",

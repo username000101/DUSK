@@ -13,6 +13,7 @@ namespace config {
         std::filesystem::path file;
         std::uint16_t rpc_port;
         std::string get_config_rpc_function;
+        std::string prefix;
     };
 
     struct Module {
@@ -48,6 +49,8 @@ namespace config {
     class UserConfiguration {
     public:
         void load_modules();
+
+        const std::vector<Module>& get_modules() const { return this->modules_; }
 
         std::filesystem::path account_directory() { return this->user_account_directory_; }
         std::filesystem::path tdlib_files_directory() { return this->tdlib_files_directory_; }

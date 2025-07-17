@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 
+#include <rpc/server.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <td/telegram/td_api.h>
@@ -13,11 +14,14 @@
 #include "Configuration.hpp"
 #include "Events.hpp"
 #include "Globals.hpp"
+#include "RPCServer.hpp"
 #include "TerminateHandler.hpp"
 #include "Updates.hpp"
 
 void dusk::start() {
     static auto logger = std::make_shared<spdlog::logger>("DUSK::start", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+
+    std::thread update_thread;
 
     spdlog::debug("Trying to get current authorization state...");
     while (true) {
@@ -36,7 +40,6 @@ void dusk::start() {
     }
 
     logger->info("DUSK is launched!");
-
     auto get_me_res = update::send_request(td::td_api::make_object<td::td_api::getMe>());
     if (get_me_res.object) {
         auto get_me = td::move_tl_object_as<td::td_api::user>(get_me_res.object);
@@ -53,12 +56,22 @@ void dusk::start() {
                  account_details);
     }
 
-    logger->info("Loading configuration...",
-                 globals::current_user);
     globals::configuration = std::make_shared<config::Configuration>(config::Configuration::parse_file(DUSK_CONFIG));
     if (globals::configuration->users.empty()) {
         logger->error("No users found! Please update DUSK configuration file");
         shutdown(EXIT_FAILURE);
     }
-    logger->info("Configuration was succefully loaded!");
+    logger->info("Configuration was successfully loaded!");
+    
+    server::rpc::up_rpc_server();
+
+    logger->info("Raising up modules...");
+    globals::configuration->current_user.load_modules();
+
+    update_thread = std::thread([] () { update::updates_broadcaster(); });
+    update_thread.detach();
+
+    while (true) {
+
+    }
 }

@@ -42,7 +42,7 @@ config::Configuration config::Configuration::parse_file(const std::filesystem::p
         auto tdlib_database_dir = account_dir / "database";
 
         auto user_obj = UserConfiguration(account_dir, tdlib_files_dir, tdlib_database_dir, modules_dir);
-        if (user_obj == globals::current_user)
+        if (user_obj() == globals::current_user)
             result.current_user = user_obj;
         result.users.push_back(user_obj);
     }

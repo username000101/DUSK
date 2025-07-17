@@ -19,6 +19,8 @@ file(GLOB Events "Events/include/*" "Events/src/*")
 
 file(GLOB Filesystem "Filesystem/include/*" "Filesystem/src/*")
 
+file(GLOB Server_RPC "Server/RPC/include/*" "Server/RPC/src/*")
+
 file(GLOB Modpack "Modpack/include/*" "Modpack/src/*")
 
 file(GLOB Updates "Updates/include/*" "Updates/src/*")
@@ -28,15 +30,19 @@ file(GLOB Utils "Utils/*")
 add_subdirectory(third_party/CLI11)
 add_subdirectory(third_party/FTXUI)
 add_subdirectory(third_party/json)
+add_subdirectory(third_party/rpc)
 add_subdirectory(third_party/libarchive-cpp)
 add_subdirectory(third_party/mutex)
 add_subdirectory(third_party/spdlog)
+set(BUILD_TESTING OFF)
+add_subdirectory(third_party/subprocess)
 
 add_executable(DUSK
     ${Args}
     ${Auth}
     ${Events}
     ${Filesystem}
+    ${Server_RPC}
     ${Modpack}
     ${Updates}
     ${Utils}
@@ -49,11 +55,14 @@ target_include_directories(
         "Auth/include"
         "Events/include"
         "Filesystem/include"
+        "Server/RPC/include"
         "Modpack/include"
         "Updates/include"
         "Utils"
 
         "third_party/mutex/include"
+        "third_party/rpc/include"
+        "third_party/subprocess/src/cpp"
 )
 target_link_libraries(
         DUSK PUBLIC
@@ -62,16 +71,12 @@ target_link_libraries(
         ftxui::component
         ftxui::dom
         ftxui::screen
+        rpc
         Td::TdStatic
         nlohmann_json::nlohmann_json
         spdlog::spdlog
+        subprocess
 )
-if (NOT MSVC)
-    target_link_options(
-            DUSK PRIVATE
-            -Wl,--export-dynamic
-    )
-endif ()
 
 if (NOT DEFINED FS_DUSK_HOME OR NOT DEFINED API_ID OR NOT DEFINED API_HASH)
     message(FATAL_ERROR "You need to specify the FS_DUSK_HOME, API_ID and API_HASH variables")

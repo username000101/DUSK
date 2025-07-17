@@ -1,10 +1,8 @@
 #pragma once
 #if defined(_WIN32)
 #define FUNCSIG __FUNCSIG__
-#define DUSK_EXPORT __declspec(dllexport)
 #else
 #define FUNCSIG __PRETTY_FUNCTION__
-#define DUSK_EXPORT __attribute__((visibility("default")))
 #endif
 
 #define DUSK_LOGO \

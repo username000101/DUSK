@@ -16,3 +16,9 @@
 [submodule "third_party/libarchive-cpp"]
 	path = third_party/libarchive-cpp
 	url = https://github.com/username000101/libarchive-cpp
+[submodule "third_party/rpc"]
+	path = third_party/rpc
+	url = https://github.com/username000101/rpclib
+[submodule "third_party/subprocess"]
+	path = third_party/subprocess
+	url = https://github.com/benman64/subprocess

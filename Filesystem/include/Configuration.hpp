@@ -3,12 +3,20 @@
 #include <cstdint>
 #include <filesystem>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "Macros.hpp"
 
 namespace config {
-    struct DUSK_EXPORT Module {
+    struct BaseModuleInfo {
+        std::filesystem::path file;
+        std::uint16_t rpc_port;
+        std::string get_config_rpc_function;
+        std::string prefix;
+    };
+
+    struct Module {
         std::string name;
         std::string id;
         std::string author;
@@ -27,12 +35,12 @@ namespace config {
             if (!std::filesystem::exists(directory_) || !std::filesystem::is_directory(directory_))
                 throw std::runtime_error("Failed to create struct Module instance: directory_(" + directory_.string() + " does not exist or it's not a directory");
 
-            this->name = name_;
-            this->id = id_;
-            this->author = author_;
-            this->version = version_;
-            this->description = description_;
-            this->entry_points = entry_points_;
+            this->name = std::move(name_);
+            this->id = std::move(id_);
+            this->author = std::move(author_);
+            this->version = std::move(version_);
+            this->description = std::move(description_);
+            this->entry_points = std::move(entry_points_);
             this->file = file_;
             this->directory = directory_;
         }
@@ -40,6 +48,10 @@ namespace config {
 
     class UserConfiguration {
     public:
+        void load_modules();
+
+        const std::vector<Module>& get_modules() const { return this->modules_; }
+
         std::filesystem::path account_directory() { return this->user_account_directory_; }
         std::filesystem::path tdlib_files_directory() { return this->tdlib_files_directory_; }
         std::filesystem::path tdlib_database_directory() { return this->tdlib_database_directory_; }
@@ -47,8 +59,8 @@ namespace config {
         std::filesystem::path config() { return this->configuration_file_; }
 
         UserConfiguration() = default;
-        UserConfiguration(std::filesystem::path account_dir, std::filesystem::path tdlib_files_dir,
-                          std::filesystem::path tdlib_database_dir, std::filesystem::path user_modules_dir) {
+        UserConfiguration(const std::filesystem::path& account_dir, const std::filesystem::path& tdlib_files_dir,
+                          const std::filesystem::path& tdlib_database_dir, const std::filesystem::path& user_modules_dir) {
             if (!std::filesystem::exists(account_dir) || !std::filesystem::is_directory(account_dir))
                 throw std::runtime_error("Failed to create class UserConfiguration instance: accounts_dir(" + account_dir.string() + ") does not exist or it's not a directory");
             if (!std::filesystem::exists(tdlib_files_dir) || !std::filesystem::is_directory(tdlib_files_dir))
@@ -67,11 +79,11 @@ namespace config {
             this->inl_parse_config();
         }
 
-        operator std::int64_t() const {
+        explicit operator std::int64_t() const {
             return std::stoll(this->configuration_file_.parent_path().filename().string());
         }
 
-        auto operator()() { return static_cast<std::int64_t>(*this); }
+        auto operator()() const { return static_cast<std::int64_t>(*this); }
     private:
         std::filesystem::path user_account_directory_;
         std::filesystem::path tdlib_files_directory_;
@@ -82,6 +94,7 @@ namespace config {
         std::int64_t id_ = 0;
         std::string prefix_;
         std::vector<Module> modules_;
+        std::vector<BaseModuleInfo> modules_base_;
 
         void inl_parse_config();
     };

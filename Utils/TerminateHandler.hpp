@@ -1,16 +1,21 @@
 #pragma once
 
+#include <algorithm>
 #include <exception>
 #include <spdlog/spdlog.h>
 
 #include "FS.hpp"
+#include "Globals.hpp"
+#include "RPCServer.hpp"
 #include "Macros.hpp"
 
 inline void shutdown(int rcode, const std::string& message = "") noexcept {
     if (!message.empty())
         spdlog::info("{}: {}",
-            "Shutdown", message);
+            FUNCSIG, message);
+    server::rpc::shutdown_rpc_server();
     filesystem::clean_env();
+    std::ranges::for_each(globals::detached_processes, [](auto& process) { process.kill(); });
     spdlog::shutdown();
     std::exit(rcode);
 }
@@ -21,11 +26,14 @@ inline void terminate_handler_f() {
         std::rethrow_exception(current_exc);
     } catch (std::exception& error) {
         spdlog::error("{}: Exception: {}",
-                      FUNCSIG, error.what());
+            FUNCSIG, error.what());
     } catch (...) {
         spdlog::error("{}: Exception: UNKNOWN");
     }
 
-    filesystem::clean_env();
-    std::exit(3);
+    shutdown(3);
+}
+
+inline void signal_handler_f(int signal) {
+    shutdown(signal, "Called the signal handler with signal " + std::to_string(signal));
 }

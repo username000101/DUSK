@@ -22,14 +22,13 @@ namespace config {
         std::string author;
         std::string version;
         std::string description;
-        std::vector<std::pair<std::string, std::string>> entry_points;
         std::filesystem::path file;
         std::filesystem::path directory;
 
         Module() = default;
-        Module(std::string name_, std::string id_, std::string author_, std::string version_,
-               std::string description_, std::vector<std::pair<std::string, std::string>> entry_points_,
-               std::filesystem::path file_, std::filesystem::path directory_) {
+        Module(const std::string& name_, const std::string& id_, const std::string& author_, const std::string& version_,
+               const std::string& description_,
+               const std::filesystem::path& file_, const std::filesystem::path& directory_) {
             if (!std::filesystem::exists(file_))
                 throw std::runtime_error("Failed to create struct Module instance: file_(" + file_.string() + ") does not exist");
             if (!std::filesystem::exists(directory_) || !std::filesystem::is_directory(directory_))
@@ -40,7 +39,6 @@ namespace config {
             this->author = std::move(author_);
             this->version = std::move(version_);
             this->description = std::move(description_);
-            this->entry_points = std::move(entry_points_);
             this->file = file_;
             this->directory = directory_;
         }

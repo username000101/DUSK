@@ -1,5 +1,6 @@
 #include "Configuration.hpp"
 
+#include <cstdint>
 #include <fstream>
 
 #include <nlohmann/json.hpp>
@@ -32,6 +33,15 @@ void config::UserConfiguration::inl_parse_config() {
         this->id_ = std::stoll(this->account_directory().filename().string());
     } else
         this->id_ = config["id"].template get<int64_t>();
+
+    if (config.contains("blocked_requests")) {
+        for (auto& req_id : config.at("blocked_requests").items()) {
+            this->blocked_requests_.push_back(req_id.value().template get<std::int64_t>());
+        }
+        spdlog::info("{}: Added {} blocked requests",
+            FUNCSIG, this->blocked_requests_.size());
+    }
+
     for (auto& kv_pair : config["modules"].items()) {
         BaseModuleInfo base_module_info;
         const auto& base_module_info_json = kv_pair.value();

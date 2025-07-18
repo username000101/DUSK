@@ -49,6 +49,7 @@ namespace config {
         void load_modules();
 
         const std::vector<Module>& get_modules() const { return this->modules_; }
+        const std::vector<std::int64_t>& get_blocked_requests() const { return this->blocked_requests_; }
 
         std::filesystem::path account_directory() { return this->user_account_directory_; }
         std::filesystem::path tdlib_files_directory() { return this->tdlib_files_directory_; }
@@ -93,6 +94,7 @@ namespace config {
         std::string prefix_;
         std::vector<Module> modules_;
         std::vector<BaseModuleInfo> modules_base_;
+        std::vector<std::int64_t> blocked_requests_;
 
         void inl_parse_config();
     };
@@ -102,15 +104,13 @@ namespace config {
         static Configuration parse_file(const std::filesystem::path& file);
 
         std::string version;
-        std::vector<std::int64_t> blocked_requests;
         std::vector<UserConfiguration> users;
         UserConfiguration current_user;
 
         Configuration() = default;
-        Configuration(std::string version_, std::vector<std::int64_t> blocked_requests_,
-                      std::vector<UserConfiguration> users_) {
+        Configuration(const std::string& version_,
+                      const std::vector<UserConfiguration>& users_) {
             this->version = version_;
-            this->blocked_requests = blocked_requests_;
             this->users = users_;
         }
     };

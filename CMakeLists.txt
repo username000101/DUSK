@@ -29,6 +29,7 @@ file(GLOB Utils "Utils/*")
 
 add_subdirectory(third_party/CLI11)
 add_subdirectory(third_party/FTXUI)
+add_subdirectory(third_party/glaze)
 add_subdirectory(third_party/json)
 add_subdirectory(third_party/rpc)
 add_subdirectory(third_party/libarchive-cpp)
@@ -55,11 +56,13 @@ target_include_directories(
         "Auth/include"
         "Events/include"
         "Filesystem/include"
+        "GlazeTypes"
         "Server/RPC/include"
         "Modpack/include"
         "Updates/include"
         "Utils"
 
+        "third_party/glaze/include"
         "third_party/mutex/include"
         "third_party/rpc/include"
         "third_party/subprocess/src/cpp"
@@ -71,6 +74,7 @@ target_link_libraries(
         ftxui::component
         ftxui::dom
         ftxui::screen
+        glaze::glaze
         rpc
         Td::TdStatic
         nlohmann_json::nlohmann_json
@@ -108,4 +112,8 @@ else ()
             DUSK PRIVATE
             DUSK_TMP="${FS_DUSK_HOME}/tmp"
     )
+endif ()
+
+if (MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
 endif ()

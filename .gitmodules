@@ -22,3 +22,6 @@
 [submodule "third_party/subprocess"]
 	path = third_party/subprocess
 	url = https://github.com/benman64/subprocess
+[submodule "third_party/glaze"]
+	path = third_party/glaze
+	url = https://github.com/stephenberry/glaze

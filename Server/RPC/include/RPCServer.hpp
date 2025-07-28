@@ -12,6 +12,7 @@
 #include "CommandEditTextMessage.hpp"
 #include "CommandsEventsHandling.hpp"
 #include "CommandModule.hpp"
+#include "CommandInstallModpack.hpp"
 #include "CommandSendTextMessage.hpp"
 #include "CommandVersion.hpp"
 /* -------- */
@@ -33,6 +34,7 @@ namespace server {
             globals::rpc_server->bind("dusk.module", dusk_rpc_server_command_module);
             globals::rpc_server->bind("dusk.send_text_message", dusk_rpc_server_command_send_text_message);
             globals::rpc_server->bind("dusk.edit_text_message", dusk_rpc_server_command_edit_text_message);
+            globals::rpc_server->bind("dusk.install_modpack", dusk_rpc_server_command_install_modpack);
 
             std::thread rpc_server_thread([] { try { globals::rpc_server->run(); } catch (std::exception err) { std::cout << "EXCEPTION: "<< err.what() << std::endl; } });
             logger->info("RPC server has been started on port {}",

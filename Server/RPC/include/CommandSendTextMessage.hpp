@@ -3,10 +3,10 @@
 #include <cstdint>
 #include <string>
 
+#include <glaze/glaze.hpp>
 #include <td/telegram/td_api.h>
 
 #include "Updates.hpp"
-#include "../../../third_party/reflect/include/rfl/thirdparty/ctre.hpp"
 
 inline std::string dusk_rpc_server_command_send_text_message(std::int64_t chat_id, const std::string& text, const std::int64_t reply_to_msg_id) {
     auto send_msg_obj = td::td_api::make_object<td::td_api::sendMessage>();

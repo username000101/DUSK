@@ -101,16 +101,19 @@ if (LINUX)
     target_compile_definitions(
             DUSK PRIVATE
             DUSK_TMP="/tmp/DUSK"
+            OS_LINUX=1
     )
 elseif (ANDROID)
     target_compile_definitions(
             DUSK PRIVATE
             DUSK_TMP="$ENV{HOME}/dusk_tmp"
+            OS_ANDROID=1
     )
 else ()
     target_compile_definitions(
             DUSK PRIVATE
             DUSK_TMP="${FS_DUSK_HOME}/tmp"
+            OS_WINDOWS=1
     )
 endif ()
 

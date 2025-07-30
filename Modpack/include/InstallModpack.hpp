@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <filesystem>
 #include <map>
 
 #include <nlohmann/json.hpp>
@@ -11,20 +12,19 @@
 #include "ModpackRead.hpp"
 #include "Macros.hpp"
 
-enum Platform {
-    Windows,
-    Linux,
-    MacOS,
-    Android,
-};
-
 namespace modpack {
     template <template <typename, typename> class MapType> bool install_modpack(ModpackReader&& modpack_obj) {
         static auto logger = std::make_shared<spdlog::logger>("DUSK::install_modpack", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
-        Platform platform;
         ModpackReader::ValuesMap<MapType> result;
-        if (modpack_obj.get_extracted_directory().empty())
-            modpack_obj.extract_modpack(std::filesystem::path(DUSK_TMP) / std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
+        if (modpack_obj.get_extracted_directory().empty()) {
+            auto extract_result = modpack_obj.extract_modpack(std::filesystem::path(DUSK_TMP) / std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
+            if (!extract_result.has_value()) {
+                logger->error("Failed to extract modpack: libarchive-cpp: {}",
+                    extract_result.error());
+                return false;
+            }
+        }
+
         try {
             result = modpack_obj.get_values_of<MapType>("config.json");
         } catch (std::exception& error) {
@@ -33,43 +33,55 @@ namespace modpack {
             return false;
         }
 
-        if (!result.contains("platform")) {
-            logger->error("Failed to install modpack: not found 'platform' section in config.json");
+        std::error_code err_code;
+	    auto target_dir_name = [&modpack_obj] -> std::string { for (auto& dir : std::filesystem::directory_iterator(modpack_obj.get_extracted_directory())) { if (dir.is_directory()) return dir.path().stem().string(); } return ""; }();
+        auto target_dir_path = globals::configuration->current_user.modules_directory() / target_dir_name;
+        std::filesystem::create_directory(target_dir_path);
+        auto platform = (result.contains("platform") ? result.at("platform").second : "");
+
+	if (!platform.empty() && platform != "\"any\"") {
+        logger->info("Installing modpack for platform {} from {} to {}",
+            platform, modpack_obj.get_extracted_directory().string(), target_dir_path.string());
+		if (platform == "\"windows\"") {
+#if defined(OS_WINDOWS)
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+#else
+			logger->warn("Specified platform is {} but current platform is Windows",
+                platform);
+#endif
+		} else if (platform == "\"linux\"") {
+#if defined(OS_LINUX)
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+#else
+			logger->warn("Specified platform is {} but current platform is Linux",
+                platform);
+#endif
+		} else if (platform == "\"android\"") {
+#if defined(OS_ANDROID)
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+#else
+			logger->warn("Specified platform is {} but current platform is Android",
+                platform);
+#endif
+		}
+
+    } else {
+            logger->warn("Platform is not specified; install anyway");
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+    }
+
+        if (err_code) {
+            logger->error("Error when copying modpack: {}",
+                err_code.message());
             return false;
+        } else {
+            logger->info("Modpack {} was installed",
+                target_dir_name);
+            return true;
         }
-
-        if (auto platofrm_ = result.at("platform").second; platofrm_ == "windows")
-            platform = Platform::Windows;
-        else if (platofrm_ == "linux")
-            platform = Platform::Linux;
-        else if (platofrm_ == "macos")
-            platform = Platform::MacOS;
-        else if (platofrm_ == "android")
-            platform = Platform::Android;
-        else {
-            logger->error("Failed to install modpack: invalid 'platform' section in config.json; available variants:[windows,linux,macos,android] but platform is '{}'",
-                platofrm_);
-            return false;
-        }
-
-        auto get_platform_string = [&platform] { switch (platform) { case Platform::Windows: return "Windows"; case Platform::Android: return "Android"; case Platform::Linux: return "Linux"; case Platform::MacOS: return "MacOS"; }};
-
-        auto target_dir_name = [&modpack_obj] { for (auto& dir : std::filesystem::directory_iterator(modpack_obj.get_extracted_directory())) { if (dir.is_directory()) return dir.path().stem().string(); } }();
-        auto traget_dir_path = globals::configuration->current_user.modules_directory() / target_dir_name;
-
-        logger->debug("Copying modpack for platform {} in {}",
-          get_platform_string(),  target_dir_name);
-
-        std::filesystem::copy(modpack_obj.get_extracted_directory(), target_dir_name, std::filesystem::copy_options::recursive);
-        return true;
     }
 
     template <template <typename, typename> class MapType> bool install_modpack(const std::filesystem::path& modpack) {
-        try {
-            return install_modpack<MapType>(ModpackReader(modpack));
-        } catch (std::exception& error) {
-            spdlog::warn("Failed to invoke install_modpack: {}", error.what());
-            return false;
-        }
+        return install_modpack<MapType>(std::move(ModpackReader(modpack)));
     }
 }

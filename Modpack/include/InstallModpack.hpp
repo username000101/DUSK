@@ -1,10 +1,12 @@
 #pragma once
 
 #include <chrono>
+#include <filesystem>
 #include <map>
 
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "Globals.hpp"
 #include "ModpackRead.hpp"
@@ -12,61 +14,74 @@
 
 namespace modpack {
     template <template <typename, typename> class MapType> bool install_modpack(ModpackReader&& modpack_obj) {
+        static auto logger = std::make_shared<spdlog::logger>("DUSK::install_modpack", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
         ModpackReader::ValuesMap<MapType> result;
-        if (modpack_obj.get_extracted_directory().empty())
-            modpack_obj.extract_modpack(std::filesystem::path(DUSK_TMP) / std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
+        if (modpack_obj.get_extracted_directory().empty()) {
+            auto extract_result = modpack_obj.extract_modpack(std::filesystem::path(DUSK_TMP) / std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
+            if (!extract_result.has_value()) {
+                logger->error("Failed to extract modpack: libarchive-cpp: {}",
+                    extract_result.error());
+                return false;
+            }
+        }
+
         try {
-            result = modpack_obj.get_values_of<std::map>("config.json");
+            result = modpack_obj.get_values_of<MapType>("config.json");
         } catch (std::exception& error) {
-            spdlog::error("{}: Failed to get values of {}/config.json: {}",
-                          FUNCSIG, modpack_obj.get_extracted_directory().string(), error.what());
+            logger->error("Failed to get values of {}/config.json: {}",
+                          modpack_obj.get_extracted_directory().string(), error.what());
             return false;
         }
 
-        if (result.contains("prebuilt")) {
-            std::string prebuilt_str = result.at("prebuilt").second;
-            std::filesystem::path current_platform_library, source_path, target_path;
-            auto prebuilt = nlohmann::json::parse(prebuilt_str);
-#if defined(__linux__)
-            if (!prebuilt.contains("linux")) {
-                spdlog::error("{}: Not found prebuilt libs for current(linux) platform",
-                              FUNCSIG);
-                return false;
-            }
-            current_platform_library = modpack_obj.get_extracted_directory() / prebuilt.at("linux").template get<std::string>();
-            target_path = std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "modules" / current_platform_library.filename();
-            source_path = modpack_obj.get_extracted_directory() / current_platform_library;
-            if (!std::filesystem::exists(source_path)) {
-                spdlog::error("{}: Library for current platform(linux) is set but doesn't exist({})",
-                              FUNCSIG, current_platform_library.string());
-                return false;
-            }
-#elif defined(_WIN32)
-            if (!prebuilt.contains("windows")) {
-                spdlog::error("{}: Not found prebuilt libs for current(windows) platform",
-                              FUNCSIG);
-                return false;
-            }
-            current_platform_library = prebuilt.at("windows").get<std::filesystem::path>();
-            target_path = std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "modules" / current_platform_library.filename();
-            source_path = modpack_obj.get_extracted_directory() / current_platform_library;
-            if (!std::filesystem::exists(source_path)) {
-                spdlog::error("{}: Library for current platform(windows) is set but doesn't exist({})",
-                              FUNCSIG, current_platform_library.string());
-                return false;
-            }
+        std::error_code err_code;
+	    auto target_dir_name = [&modpack_obj] -> std::string { for (auto& dir : std::filesystem::directory_iterator(modpack_obj.get_extracted_directory())) { if (dir.is_directory()) return dir.path().stem().string(); } return ""; }();
+        auto target_dir_path = globals::configuration->current_user.modules_directory() / target_dir_name;
+        std::filesystem::create_directory(target_dir_path);
+        auto platform = (result.contains("platform") ? result.at("platform").second : "");
+
+	if (!platform.empty() && platform != "\"any\"") {
+        logger->info("Installing modpack for platform {} from {} to {}",
+            platform, modpack_obj.get_extracted_directory().string(), target_dir_path.string());
+		if (platform == "\"windows\"") {
+#if defined(OS_WINDOWS)
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
 #else
-#error "Current platform is not supported now"
+			logger->warn("Specified platform is {} but current platform is Windows",
+                platform);
 #endif
-            spdlog::info("{}: Copying library {}",
-                         FUNCSIG, current_platform_library.string());
-            std::filesystem::copy(source_path, target_path);
+		} else if (platform == "\"linux\"") {
+#if defined(OS_LINUX)
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+#else
+			logger->warn("Specified platform is {} but current platform is Linux",
+                platform);
+#endif
+		} else if (platform == "\"android\"") {
+#if defined(OS_ANDROID)
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+#else
+			logger->warn("Specified platform is {} but current platform is Android",
+                platform);
+#endif
+		}
+
+    } else {
+            logger->warn("Platform is not specified; install anyway");
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+    }
+
+        if (err_code) {
+            logger->error("Error when copying modpack: {}",
+                err_code.message());
+            return false;
+        } else {
+            logger->info("Modpack {} was installed",
+                target_dir_name);
             return true;
         }
-        return false;
     }
 
     template <template <typename, typename> class MapType> bool install_modpack(const std::filesystem::path& modpack) {
-        return install_modpack<MapType>(ModpackReader(modpack));
+        return install_modpack<MapType>(std::move(ModpackReader(modpack)));
     }
 }

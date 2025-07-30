@@ -29,4 +29,6 @@ void filesystem::check_filesystem() {
         write_default_config();
     if (!std::filesystem::exists(DUSK_ACCOUNTS) || !std::filesystem::is_directory(DUSK_ACCOUNTS))
         std::filesystem::create_directory(DUSK_ACCOUNTS);
+    if (!std::filesystem::exists(DUSK_TMP) || !std::filesystem::is_directory(DUSK_TMP))
+        std::filesystem::create_directory(DUSK_TMP);
 }

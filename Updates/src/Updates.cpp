@@ -14,6 +14,7 @@
 #include <td/telegram/td_api.h>
 
 #include "Events.hpp"
+#include "Globals.hpp"
 
 std::unordered_map<td::ClientManager::RequestId, td::ClientManager::Response> unconfirmed_updates;
 
@@ -58,7 +59,7 @@ td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_a
 
     static auto logger = std::make_shared<spdlog::logger>("Updates::send_request", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
     if (!client) {
-        spdlog::debug("Looks like this function running for the first time; initializing the client variable with value (addr){}",
+        logger->debug("Looks like this function running for the first time; initializing the client variable with value (addr){}",
                       reinterpret_cast<std::uintptr_t>(client_.get()));
         client = client_;
     }
@@ -66,15 +67,25 @@ td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_a
     static std::int64_t request_id = 0;
     static td::ClientManager::ClientId client_id = 0;
     if (client_id == 0) {
-        spdlog::debug("Looks like this function running for the first time; initializing the client_id variable with value (td::ClientManager::ClientId){}",
+        logger->debug("Looks like this function running for the first time; initializing the client_id variable with value (td::ClientManager::ClientId){}",
           client_id_);
         client_id = client_id_;
     }
 
+    if (globals::configuration) {
+        if (auto& b_reqs = globals::configuration->current_user.get_blocked_requests(); std::ranges::find(b_reqs, request->get_id()) != b_reqs.end()) {
+            logger->warn("Request with id {} was blocked(found it in blocked_requests)",
+                request->get_id());
+            return {};
+        }
+    } else
+        logger->warn("Request with id {} may be blocked, but globals::configuration structure is not initialized now(required by globals::configuration::current_user::blocked_reuqests_)",
+            request->get_id());
+
     auto current_req_id = ++request_id;
 
     if (unconfirmed_updates.contains(current_req_id)) {
-        spdlog::debug("Update for request id: {} already received(in unconfirmed_updates)",
+        logger->debug("Update for request id: {} already received(in unconfirmed_updates)",
                       current_req_id);
         auto result = std::move(unconfirmed_updates.at(current_req_id));
         unconfirmed_updates.erase(current_req_id);
@@ -85,14 +96,14 @@ td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_a
 
     constexpr unsigned short attempts = 15;
     for (auto i = attempts; i > 0; --i) {
-        spdlog::trace("Trying to get response for request id: {}(attempt until fail: {})",
+        logger->trace("Trying to get response for request id: {}(attempt until fail: {})",
                       current_req_id, attempts - 1);
 
         client_mtx.lock();
         auto update = client->receive(DUSK_TDLIB_TIMEOUT);
         client_mtx.unlock();
         if (update.request_id == 0 && update.client_id != 0 && update.object) {
-            spdlog::debug("Received update: {}",
+            logger->debug("Received update: {}",
                          update.object->get_id());
             updates_mtx.lock();
             updates.push_back(std::move(update.object));

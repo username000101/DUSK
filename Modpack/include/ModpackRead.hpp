@@ -1,5 +1,6 @@
 #pragma once
 
+#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <utility>
@@ -7,14 +8,14 @@
 #include <nlohmann/json.hpp>
 
 namespace modpack {
-    class ModpackReader {
+    class   ModpackReader {
     public:
         ModpackReader(std::filesystem::path modpack_path) : file_(modpack_path) {
             if (!std::filesystem::exists(modpack_path.string()) || std::filesystem::is_directory(modpack_path.string()))
                 throw std::runtime_error("Cannot open modpack file");
         }
 
-        std::filesystem::path extract_modpack(std::filesystem::path into);
+        std::expected<std::filesystem::path, std::string> extract_modpack(std::filesystem::path into);
 
         enum ParameterType { STRING, INT, OBJECT, ARRAY, };
         template <template <typename, typename> class MapType> using ValuesMap = MapType<std::string, std::pair<ParameterType, std::string>>;

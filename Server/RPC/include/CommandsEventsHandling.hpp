@@ -6,22 +6,31 @@
 #include <unordered_map>
 
 #include <rpc/client.h>
+#include <glaze/glaze.hpp>
 #include <td/telegram/td_api.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "Events.hpp"
 
+#include "Message.hpp"
+
 static inline std::unordered_map<std::int64_t, std::vector<std::pair<std::uint16_t, std::string>>> external_handlers;
 
 
 inline bool process_update(events::ModifiedEventSignature update) {
     static auto logger = std::make_shared<spdlog::logger>("RPC::process_update", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+    if (!update)
+        return false;
     if (external_handlers.contains(update->get_id())) {
         for (auto& handler : external_handlers.at(update->get_id())) {
             rpc::client client("127.0.0.1", handler.first);
             try {
-                client.async_call(handler.second, td::td_api::to_string(*update));
+                if (update->get_id() == td::td_api::updateNewMessage::ID) {
+                    auto message = std::static_pointer_cast<td::td_api::updateNewMessage>(update);
+                    auto msg = std::move(*message->message_.get());
+                    client.async_call(handler.second, glz::write<glz::opts{.prettify = true}>(msg).value_or(""));
+                }
             } catch (std::exception& rpcerr) {
                 logger->error("rpc::client throw an exception: {}",
                     rpcerr.what());

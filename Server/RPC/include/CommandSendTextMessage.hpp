@@ -6,8 +6,9 @@
 #include <td/telegram/td_api.h>
 
 #include "Updates.hpp"
+#include "../../../third_party/reflect/include/rfl/thirdparty/ctre.hpp"
 
-inline std::pair<std::string, std::string> dusk_rpc_server_command_send_text_message(std::int64_t chat_id, const std::string& text, const std::int64_t reply_to_msg_id) {
+inline std::string dusk_rpc_server_command_send_text_message(std::int64_t chat_id, const std::string& text, const std::int64_t reply_to_msg_id) {
     auto send_msg_obj = td::td_api::make_object<td::td_api::sendMessage>();
     send_msg_obj->chat_id_ = chat_id;
 
@@ -24,11 +25,14 @@ inline std::pair<std::string, std::string> dusk_rpc_server_command_send_text_mes
         send_msg_obj->reply_to_ = std::move(msg_reply_to_obj);
     }
 
-    auto result_request_str = td::td_api::to_string(send_msg_obj);
     auto response = update::send_request(std::move(send_msg_obj));
     if (!response.object)
-        return std::make_pair(result_request_str, "");
-    return std::make_pair(result_request_str, td::td_api::to_string(response.object));
+        return "ERROR/INVALID OBJECT";
+    if (response.object->get_id() == td::td_api::error::ID) {
+        const auto* error_details = static_cast<const td::td_api::error*>(response.object.get());
+        return error_details->message_;
+    }
+    return glz::write_json(*static_cast<td::td_api::message*>(response.object.get())).value_or("ERROR");
 
 
 }

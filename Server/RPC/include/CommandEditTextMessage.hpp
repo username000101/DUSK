@@ -21,7 +21,7 @@ inline std::string dusk_rpc_server_command_edit_text_message(std::int64_t chat_i
 
     auto response = update::send_request(std::move(edit_msg_obj));
     if (response.object)
-        return td::td_api::to_string(response.object);
+        return "0";
     else
         return "";
 }

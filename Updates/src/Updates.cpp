@@ -41,9 +41,9 @@ void update::updates_broadcaster() {
         } else {
             if (!client)
                 continue;
-            spdlog::debug("Attempt to find updates manually...");
+            logger->trace("Attempt to find updates manually...");
             client_mtx.lock();
-            auto update = client->receive(DUSK_TDLIB_TIMEOUT);
+            auto update = client->receive(0.0);
             client_mtx.unlock();
             if (update.request_id != 0 || !update.object)
                 continue;
@@ -79,7 +79,7 @@ td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_a
             return {};
         }
     } else
-        logger->warn("Request with id {} may be blocked, but globals::configuration structure is not initialized now(required by globals::configuration::current_user::blocked_reuqests_)",
+        logger->debug("Request with id {} may be blocked, but globals::configuration structure is not initialized now(required by globals::configuration::current_user::blocked_reuqests_)",
             request->get_id());
 
     auto current_req_id = ++request_id;
@@ -94,7 +94,7 @@ td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_a
 
     client->send(client_id, current_req_id, std::move(request));
 
-    constexpr unsigned short attempts = 15;
+    constexpr unsigned int attempts = 4000;
     for (auto i = attempts; i > 0; --i) {
         logger->trace("Trying to get response for request id: {}(attempt until fail: {})",
                       current_req_id, attempts - 1);
@@ -122,7 +122,7 @@ td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_a
         return update;
     }
 
-    logger->warn("Attempt are ended but response for request id: {} doesn't received...",
+    logger->debug("Attempt are ended but response for request id: {} doesn't received...",
                  current_req_id);
     return {};
 }

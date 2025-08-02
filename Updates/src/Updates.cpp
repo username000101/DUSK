@@ -43,7 +43,7 @@ void update::updates_broadcaster() {
                 continue;
             logger->trace("Attempt to find updates manually...");
             client_mtx.lock();
-            auto update = client->receive(0.0);
+            auto update = client->receive(1.0);
             client_mtx.unlock();
             if (update.request_id != 0 || !update.object)
                 continue;

@@ -92,7 +92,7 @@ target_compile_definitions(
         DUSK_ACCOUNTS="${FS_DUSK_HOME}/accounts"
         DUSK_CONFIG="${FS_DUSK_HOME}/config.json"
         DUSK_VERSION="${PROJECT_VERSION}"
-        DUSK_TDLIB_TIMEOUT=5.0
+        DUSK_TDLIB_TIMEOUT=4.0
         API_ID=${API_ID}
         API_HASH="${API_HASH}"
 )

@@ -14,6 +14,7 @@
 #include "Events.hpp"
 
 #include "Message.hpp"
+#include "UpdateChatLastMessage.hpp"
 
 static inline std::unordered_map<std::int64_t, std::vector<std::pair<std::uint16_t, std::string>>> external_handlers;
 

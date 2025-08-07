@@ -33,6 +33,11 @@ namespace modpack {
         }
         auto result_val = result.value();
 
+        if (!result_val.contains("config")) {
+            logger->error("Failed to get value 'config'");
+            return false;
+        }
+
         std::error_code err_code;
 	    auto target_dir_name = [&modpack_obj] -> std::string { for (auto& dir : std::filesystem::directory_iterator(modpack_obj.get_extracted_directory())) { if (dir.is_directory()) return dir.path().stem().string(); } return ""; }();
         auto target_dir_path = globals::configuration->current_user.modules_directory() / target_dir_name;
@@ -44,30 +49,33 @@ namespace modpack {
             platform, modpack_obj.get_extracted_directory().string(), target_dir_path.string());
 		if (platform == "\"windows\"") {
 #if defined(OS_WINDOWS)
-            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing, err_code);
 #else
 			logger->warn("Specified platform is {} but current platform is Windows",
                 platform);
+		    return false;
 #endif
 		} else if (platform == "\"linux\"") {
 #if defined(OS_LINUX)
-            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing, err_code);
 #else
-			logger->warn("Specified platform is {} but current platform is Linux",
+			logger->error("Specified platform is {} but current platform is Linux",
                 platform);
+		    return false;
 #endif
 		} else if (platform == "\"android\"") {
 #if defined(OS_ANDROID)
-            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing, err_code);
 #else
-			logger->warn("Specified platform is {} but current platform is Android",
+			logger->error("Specified platform is {} but current platform is Android",
                 platform);
+		    return false;
 #endif
 		}
 
     } else {
             logger->warn("Platform is not specified; install anyway");
-            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::copy(modpack_obj.get_extracted_directory() / target_dir_name, target_dir_path, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing, err_code);
     }
 
         if (err_code) {

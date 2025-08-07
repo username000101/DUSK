@@ -15,7 +15,7 @@
 namespace modpack {
     template <template <typename, typename> class MapType> bool install_modpack(ModpackReader&& modpack_obj) {
         static auto logger = std::make_shared<spdlog::logger>("DUSK::install_modpack", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
-        ModpackReader::ValuesMap<MapType> result;
+        std::expected<ModpackReader::ValuesMap<MapType>, std::string> result;
         if (modpack_obj.get_extracted_directory().empty()) {
             auto extract_result = modpack_obj.extract_modpack(std::filesystem::path(DUSK_TMP) / std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
             if (!extract_result.has_value()) {
@@ -25,19 +25,19 @@ namespace modpack {
             }
         }
 
-        try {
-            result = modpack_obj.get_values_of<MapType>("config.json");
-        } catch (std::exception& error) {
+        result = modpack_obj.get_values_of<MapType>("config.json");
+        if (!result) {
             logger->error("Failed to get values of {}/config.json: {}",
-                          modpack_obj.get_extracted_directory().string(), error.what());
+                              modpack_obj.get_extracted_directory().string(), result.error());
             return false;
         }
+        auto result_val = result.value();
 
         std::error_code err_code;
 	    auto target_dir_name = [&modpack_obj] -> std::string { for (auto& dir : std::filesystem::directory_iterator(modpack_obj.get_extracted_directory())) { if (dir.is_directory()) return dir.path().stem().string(); } return ""; }();
         auto target_dir_path = globals::configuration->current_user.modules_directory() / target_dir_name;
         std::filesystem::create_directory(target_dir_path);
-        auto platform = (result.contains("platform") ? result.at("platform").second : "");
+        auto platform = (result_val.contains("platform") ? result_val.at("platform").second : "");
 
 	if (!platform.empty() && platform != "\"any\"") {
         logger->info("Installing modpack for platform {} from {} to {}",

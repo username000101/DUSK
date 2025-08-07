@@ -20,16 +20,16 @@ namespace modpack {
         enum ParameterType { STRING, INT, OBJECT, ARRAY, };
         template <template <typename, typename> class MapType> using ValuesMap = MapType<std::string, std::pair<ParameterType, std::string>>;
 
-        template <template <typename, typename> class MapType> ValuesMap<MapType> get_values_of(std::filesystem::path config_file) {
+        template <template <typename, typename> class MapType> std::expected<ValuesMap<MapType>, std::string> get_values_of(std::filesystem::path config_file) {
             if (!std::filesystem::exists(config_file) || std::filesystem::is_directory(config_file)) {
                 if (!std::filesystem::exists(this->extracted_modpack_path_ / config_file) || std::filesystem::is_directory(config_file))
-                    throw std::invalid_argument("File does not exist");
+                    return std::unexpected("File does not exist");
                 config_file = this->extracted_modpack_path_ / config_file;
             }
 
             std::ifstream config_file_stream(config_file);
             if (!config_file_stream.is_open())
-                throw std::runtime_error("Could not open config file");
+                return std::unexpected("Could not open config file");
             nlohmann::json config = nlohmann::json::parse(config_file_stream);
             config_file_stream.close();
             ValuesMap<MapType> result;

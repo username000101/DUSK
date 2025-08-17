@@ -2,20 +2,27 @@
 
 #include <algorithm>
 #include <exception>
+#include <sstream>
+
+#include <rpc/rpc_error.h>
 #include <spdlog/spdlog.h>
 
 #include "FS.hpp"
 #include "Globals.hpp"
 #include "RPCServer.hpp"
 #include "Macros.hpp"
+#include "Updates.hpp"
 
 inline void shutdown(int rcode, const std::string& message = "") noexcept {
     if (!message.empty())
-        spdlog::info("{}: {}",
+        spdlog::info("{}: message: {}",
             FUNCSIG, message);
     server::rpc::shutdown_rpc_server();
     filesystem::clean_env();
     std::ranges::for_each(globals::detached_processes, [](auto& process) { process.kill(); });
+    spdlog::info("{}: Closing tdlib instance",
+        FUNCSIG);
+    update::send_request(td::td_api::make_object<td::td_api::close>());
     spdlog::shutdown();
     std::exit(rcode);
 }
@@ -24,11 +31,18 @@ inline void terminate_handler_f() {
     auto current_exc = std::current_exception();
     try {
         std::rethrow_exception(current_exc);
+    }
+    catch (rpc::rpc_error& rpc_error) {
+        auto object = rpc_error.get_error().as<RPCLIB_MSGPACK::object>();
+        std::ostringstream error_dump;
+        error_dump << object;
+        spdlog::critical("{}: RPC server exception: {}: {}",
+            FUNCSIG, rpc_error.get_function_name(), error_dump.str());
     } catch (std::exception& error) {
-        spdlog::error("{}: Exception: {}",
+        spdlog::critical("{}: Exception: {}",
             FUNCSIG, error.what());
     } catch (...) {
-        spdlog::error("{}: Exception: UNKNOWN");
+        spdlog::critical("{}: Exception: UNKNOWN");
     }
 
     shutdown(3);

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 
+#include <glaze/glaze.hpp>
 #include <rpc/server.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -17,6 +18,8 @@
 #include "RPCServer.hpp"
 #include "TerminateHandler.hpp"
 #include "Updates.hpp"
+
+#include "User.hpp"
 
 void dusk::start() {
     static auto logger = std::make_shared<spdlog::logger>("DUSK::start", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
@@ -43,17 +46,8 @@ void dusk::start() {
     auto get_me_res = update::send_request(td::td_api::make_object<td::td_api::getMe>());
     if (get_me_res.object) {
         auto get_me = td::move_tl_object_as<td::td_api::user>(get_me_res.object);
-        std::string account_details = fmt::format("{{\n\tfirst_name: {}\n\tusername(latest): {}\n\tDUSK_ACCOUNT: {}\n\tModules installed: {}\n}}",
-                                                   get_me->first_name_, (!get_me->usernames_ ? std::to_string(get_me->id_) : *get_me->usernames_->active_usernames_.begin()),
-                                                   (std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user)).string(),
-                                                   []() -> int {
-                                                       int result = 0;
-                                                       for (auto f : std::filesystem::directory_iterator(std::filesystem::path(DUSK_ACCOUNTS) / std::to_string(globals::current_user) / "modules"))
-                                                           ++result;
-                                                       return result;
-                                                   }());
         logger->info("Account details: {}",
-                 account_details);
+            glz::write<glz::opts{.prettify = true}>(std::move(*td::move_tl_object_as<td::td_api::user>(get_me))).value_or("Failed to get user data"));
     }
 
     globals::configuration = std::make_shared<config::Configuration>(config::Configuration::parse_file(DUSK_CONFIG));

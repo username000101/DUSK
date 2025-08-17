@@ -17,13 +17,13 @@ bool auth::authorize() {
     bool have_password = false;
     std::string phone_number, code, password, password_hint;
 
-    for (int attempt = 1; attempt <= 5; ++attempt) {
+    for (unsigned int attempt = 1; attempt <= 4000; ++attempt) {
         auto current_authorization_state = update::send_request(td::td_api::make_object<td::td_api::getAuthorizationState>());
         if (!current_authorization_state.object) {
             logger->warn("Returned invalid response; trying again({} attempts left)",
                          5 - attempt);
             continue;
-        } else if (attempt == 5) {
+        } else if (attempt == 3999) {
             logger->critical("Attempts ended, aborting");
             std::exit(-1);
         } else {
@@ -53,13 +53,13 @@ bool auth::authorize() {
         if (confirm("\"" + phone_number + "\" - correct?")) break;
     }
 
-    for (int attempt = 1; attempt <= 5; ++attempt) {
+    for (unsigned int attempt = 1; attempt <= 4000; ++attempt) {
         auto phone_number_result = update::send_request(td::td_api::make_object<td::td_api::setAuthenticationPhoneNumber>(phone_number, nullptr));
         if (!phone_number_result.object) {
-            logger->warn("Returned invalid response; trying again({} attempts left)",
-                         5 - attempt);
+            logger->debug("Returned invalid response; trying again({} attempts left)",
+                         4000 - attempt);
             continue;
-        } else if (attempt == 5) {
+        } else if (attempt == 3999) {
             logger->critical("Attempts ended, aborting");
             std::exit(-1);
         } else {
@@ -83,13 +83,13 @@ bool auth::authorize() {
 
     }
 
-    for (int attempt = 1; attempt <= 5; ++attempt) {
+    for (unsigned int attempt = 1; attempt <= 4000; ++attempt) {
         auto code_result = update::send_request(td::td_api::make_object<td::td_api::checkAuthenticationCode>(code));
         if (!code_result.object) {
-            logger->warn("Returned invalid response; trying again({} attempts left)",
-                         5 - attempt);
+            logger->debug("Returned invalid response; trying again({} attempts left)",
+                         4000 - attempt);
             continue;
-        } else if (attempt == 5) {
+        } else if (attempt == 3999) {
             logger->critical("Attempts ended, aborting");
             std::exit(-1);
         } else {
@@ -102,13 +102,13 @@ bool auth::authorize() {
         }
     }
 
-    for (int attempt = 1; attempt <= 5; ++attempt) {
+    for (unsigned int attempt = 1; attempt <= 4000; ++attempt) {
         auto current_authorization_state = update::send_request(td::td_api::make_object<td::td_api::getAuthorizationState>());
         if (!current_authorization_state.object) {
-            logger->warn("Returned invalid response; trying again({} attempts left)",
-                         5 - attempt);
+            logger->debug("Returned invalid response; trying again({} attempts left)",
+                         4000 - attempt);
             continue;
-        } else if (attempt == 5) {
+        } else if (attempt == 3999) {
             logger->critical("Attempts ended, aborting");
             std::exit(-1);
         } else {
@@ -136,14 +136,14 @@ bool auth::authorize() {
 
     }
 
-    for (int attempt = 1; attempt <= 5; ++attempt) {
+    for (int attempt = 1; attempt <= 4000; ++attempt) {
         auto password_result = update::send_request(td::td_api::make_object<td::td_api::checkAuthenticationPassword>(password));
         if (!password_result.object) {
-            logger->warn("Returned invalid response; trying again({} attempts left)",
-                5 - attempt);
+            logger->debug("Returned invalid response; trying again({} attempts left)",
+                4000 - attempt);
             continue;
         }
-        else if (attempt == 5) {
+        else if (attempt == 3999) {
             logger->critical("Attempts ended, aborting");
             std::exit(-1);
         }
@@ -157,14 +157,14 @@ bool auth::authorize() {
         }
     }
 
-    for (int attempt = 1; attempt <= 5; ++attempt) {
+    for (int attempt = 1; attempt <= 4000; ++attempt) {
         auto current_authorization_state = update::send_request(td::td_api::make_object<td::td_api::getAuthorizationState>());
         if (!current_authorization_state.object) {
-            logger->warn("Returned invalid response; trying again({} attempts left)",
-                5 - attempt);
+            logger->debug("Returned invalid response; trying again({} attempts left)",
+                4000 - attempt);
             continue;
         }
-        else if (attempt == 5) {
+        else if (attempt == 3999) {
             logger->critical("Attempts ended, aborting");
             std::exit(-1);
         }

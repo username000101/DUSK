@@ -45,10 +45,6 @@ int args::process_args(int argc, char **argv) {
     auto modules = DUSK.add_flag("-m,--modules", show_modules, "Show USER modules");
     modules->needs(user_param);
 
-    auto install = DUSK.add_option("-i,--install", install_file_path, "Install the specified module package");
-    install->type_name("FILE");
-    install->needs(user_param);
-
     DUSK.callback([&] () {
         if (user == 0 && (!show_version && !reinit_config_flag && !update_config_flag))
             throw std::invalid_argument("The --user/-u parameter is required");
@@ -72,9 +68,6 @@ int args::process_args(int argc, char **argv) {
             callbacks::update_config();
 
         if (!custom_config_file.empty()) /* --config=FILE */ { /* UNDECLARED YET */ }
-
-        if (!install_file_path.empty()) /* --install=FILE */
-            callbacks::install(install_file_path);
 
         filesystem::init_user();
 #if defined(DUSK_TDLIB_USE_TEST_DC)

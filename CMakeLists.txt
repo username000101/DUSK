@@ -21,18 +21,14 @@ file(GLOB Filesystem "Filesystem/include/*" "Filesystem/src/*")
 
 file(GLOB Server_RPC "Server/RPC/include/*" "Server/RPC/src/*")
 
-file(GLOB Modpack "Modpack/include/*" "Modpack/src/*")
-
 file(GLOB Updates "Updates/include/*" "Updates/src/*")
 
 file(GLOB Utils "Utils/*")
 
 add_subdirectory(third_party/CLI11)
-add_subdirectory(third_party/FTXUI)
 add_subdirectory(third_party/glaze)
 add_subdirectory(third_party/json)
 add_subdirectory(third_party/rpc)
-add_subdirectory(third_party/libarchive-cpp)
 add_subdirectory(third_party/mutex)
 add_subdirectory(third_party/spdlog)
 set(BUILD_TESTING OFF)
@@ -44,7 +40,6 @@ add_executable(DUSK
     ${Events}
     ${Filesystem}
     ${Server_RPC}
-    ${Modpack}
     ${Updates}
     ${Utils}
     main.cpp
@@ -58,7 +53,6 @@ target_include_directories(
         "Filesystem/include"
         "GlazeTypes"
         "Server/RPC/include"
-        "Modpack/include"
         "Updates/include"
         "Utils"
 
@@ -69,11 +63,7 @@ target_include_directories(
 )
 target_link_libraries(
         DUSK PUBLIC
-        archive-cpp
         CLI11::CLI11
-        ftxui::component
-        ftxui::dom
-        ftxui::screen
         glaze::glaze
         rpc
         Td::TdStatic

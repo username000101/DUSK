@@ -30,7 +30,6 @@ int args::process_args(int argc, char **argv) {
     user_param->type_name("INT64");
 
     auto remove_user = DUSK.add_flag("-r,--remove", remove_user_flag, "Remove the specified user");
-    remove_user->type_name("BOOL");
     remove_user->needs(user_param);
 
     auto custom_cfg = DUSK.add_option("-f,--cfg,--config", custom_config_file, "Run DUSK with custom configuration file");
@@ -41,9 +40,6 @@ int args::process_args(int argc, char **argv) {
 
     DUSK.add_flag("-w,--reinit", reinit_config_flag, "Restore the default config");
     DUSK.add_flag("-a,--update", update_config_flag, "Update the config");
-
-    auto modules = DUSK.add_flag("-m,--modules", show_modules, "Show USER modules");
-    modules->needs(user_param);
 
     DUSK.callback([&] () {
         if (user == 0 && (!show_version && !reinit_config_flag && !update_config_flag))
@@ -60,9 +56,6 @@ int args::process_args(int argc, char **argv) {
 
         if (reinit_config_flag) /* --reinit */
             callbacks::reinit_config();
-
-        if (show_modules) /* --modules */
-            callbacks::modules_list(user);
 
         if (update_config_flag) /* --update */
             callbacks::update_config();

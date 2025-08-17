@@ -26,7 +26,6 @@ file(GLOB Updates "Updates/include/*" "Updates/src/*")
 file(GLOB Utils "Utils/*")
 
 add_subdirectory(third_party/CLI11)
-add_subdirectory(third_party/FTXUI)
 add_subdirectory(third_party/glaze)
 add_subdirectory(third_party/json)
 add_subdirectory(third_party/rpc)
@@ -65,9 +64,6 @@ target_include_directories(
 target_link_libraries(
         DUSK PUBLIC
         CLI11::CLI11
-        ftxui::component
-        ftxui::dom
-        ftxui::screen
         glaze::glaze
         rpc
         Td::TdStatic

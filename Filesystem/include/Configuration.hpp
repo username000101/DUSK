@@ -101,17 +101,18 @@ namespace config {
 
     class Configuration {
     public:
-        static Configuration parse_file(const std::filesystem::path& file);
-
-        std::string version;
-        std::vector<UserConfiguration> users;
-        UserConfiguration current_user;
-
         Configuration() = default;
         Configuration(const std::string& version_,
-                      const std::vector<UserConfiguration>& users_) {
+            const std::vector<UserConfiguration>& users_) {
             this->version = version_;
             this->users = users_;
         }
+
+        static Configuration parse_file(const std::filesystem::path& file);
+
+        std::string version;
+        std::vector<Module> modules; /* DUSK-level modules*/
+        std::vector<UserConfiguration> users;
+        UserConfiguration current_user;
     };
 }

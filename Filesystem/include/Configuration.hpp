@@ -12,18 +12,15 @@ namespace config {
     struct BaseModuleInfo {
         std::filesystem::path file;
         std::uint16_t rpc_port;
-        std::string get_config_rpc_function;
-        std::string prefix;
+        std::string get_config_rpc_function, prefix;
+        /* 'admin' and 'main' variables only for DUSK-level modules */
+        bool admin = false;
+        bool main = false;
     };
 
     struct Module {
-        std::string name;
-        std::string id;
-        std::string author;
-        std::string version;
-        std::string description;
-        std::filesystem::path file;
-        std::filesystem::path directory;
+        std::string name, id, author, version, description;
+        std::filesystem::path file, directory;
 
         Module() = default;
         Module(const std::string& name_, const std::string& id_, const std::string& author_, const std::string& version_,
@@ -84,11 +81,7 @@ namespace config {
 
         auto operator()() const { return static_cast<std::int64_t>(*this); }
     private:
-        std::filesystem::path user_account_directory_;
-        std::filesystem::path tdlib_files_directory_;
-        std::filesystem::path tdlib_database_directory_;
-        std::filesystem::path user_modules_directory_;
-        std::filesystem::path configuration_file_;
+        std::filesystem::path user_account_directory_, tdlib_files_directory_, tdlib_database_directory_, user_modules_directory_, configuration_file_;
 
         std::int64_t id_ = 0;
         std::string prefix_;

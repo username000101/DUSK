@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 
 #include "Macros.hpp"
+#include "TerminateHandler.hpp"
 
 void args::callbacks::update_config() {
     nlohmann::json config;
@@ -32,5 +33,5 @@ void args::callbacks::update_config() {
         config_write << config.dump(4);
     }
 
-    spdlog::info("Update config complete");
+    shutdown(0, "Update config complete");
 }

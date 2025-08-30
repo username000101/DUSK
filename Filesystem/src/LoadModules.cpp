@@ -6,11 +6,13 @@
 #include <unordered_map>
 
 #include <rpc/client.h>
+#include <rpc/rpc_error.h>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 #include <subprocess.hpp>
 
 #include "Globals.hpp"
+#include "RPCErrorConverter.hpp"
 #include "Macros.hpp"
 
 std::optional<config::Module> load_module_info(const nlohmann::json& module_info_json) {
@@ -59,13 +61,12 @@ void config::UserConfiguration::load_modules() {
         globals::detached_processes.push_back(subprocess::RunBuilder({module.prefix, module.file.string()}).popen());
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-        std::shared_ptr<rpc::client> module_rpc_test;
-
+        std::optional<rpc::client> module_rpc_test; // <-- std::optional for delayed initialization
         try {
-            module_rpc_test = std::make_shared<rpc::client>("127.0.0.1", module.rpc_port);
-        } catch (std::exception& e) {
+            module_rpc_test.emplace("127.0.0.1", module.rpc_port);
+        } catch (rpc::rpc_error& rpcerr) {
             spdlog::error("{}: Failed to load module '{}': rpc::client throws an exception(state: init_client): {}",
-                FUNCSIG, module.file.string(), e.what());
+                FUNCSIG, module.file.string(), convert_rpc_error(rpcerr));
             continue;
         }
 
@@ -75,20 +76,25 @@ void config::UserConfiguration::load_modules() {
             continue;
         }
 
-        auto module_config = module_rpc_test->call(module.get_config_rpc_function);
+        clmdep_msgpack::object_handle module_config;
+        try {
+            module_config = module_rpc_test->call(module.get_config_rpc_function);
+        } catch (rpc::rpc_error& rpcerr) {
+            spdlog::error("{}: Failed to load module '{}': rpc::client throws an exception(state: call): {}",
+                FUNCSIG, module.file.string(), convert_rpc_error(rpcerr));
+        }
         nlohmann::json module_config_json;
         try {
             module_config_json = nlohmann::json::parse(module_config.as<std::string>());
             spdlog::debug("{}: Dump of the module response:\n{}:\n{}",
                 FUNCSIG, module.get_config_rpc_function, module_config_json.dump(4));
-        } catch (std::exception& e) {
+        } catch (rpc::rpc_error& rpcerr) {
             spdlog::error("{}: Failed to load module '{}': rpc::client throws an exception(state: parse_response): {}",
-                FUNCSIG, module.file.string(), e.what());
+                FUNCSIG, module.file.string(), convert_rpc_error(rpcerr));
             continue;
         }
 
-        auto module_config_obj = load_module_info(module_config_json);
-        if (module_config_obj)
+        if (auto module_config_obj = load_module_info(module_config_json); module_config_obj)
             this->modules_.push_back(std::move(module_config_obj.value()));
         else
             spdlog::warn("{}: Failed to load module '{}': load_module_info returned invalid object(check previous logs)",

@@ -17,7 +17,8 @@ inline void shutdown(int rcode, const std::string& message = "") noexcept {
     if (!message.empty())
         spdlog::info("{}: message: {}",
             FUNCSIG, message);
-    server::rpc::shutdown_rpc_server();
+    if (globals::rpc_server)
+        server::rpc::shutdown_rpc_server();
     filesystem::clean_env();
     std::ranges::for_each(globals::detached_processes, [](auto& process) { process.kill(); });
     spdlog::info("{}: Closing tdlib instance",

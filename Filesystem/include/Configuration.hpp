@@ -12,10 +12,11 @@ namespace config {
     struct BaseModuleInfo {
         std::filesystem::path file;
         std::uint16_t rpc_port;
-        std::string get_config_rpc_function, prefix;
-        /* 'admin' and 'main' variables only for DUSK-level modules */
+        std::string get_config_rpc_function, prefix, set_access_token_function;
+        /* 'admin', 'set_access_token_function', 'main' and 'mod_id' variables only for DUSK-level modules */
         bool admin = false;
         bool main = false;
+        std::string mod_id;
     };
 
     struct Module {
@@ -103,9 +104,9 @@ namespace config {
 
         static Configuration parse_file(const std::filesystem::path& file);
 
-        std::string version;
-        std::vector<Module> modules; /* DUSK-level modules*/
-        std::vector<UserConfiguration> users;
-        UserConfiguration current_user;
+        std::string version; /* The current DUSK version(in ${DUSK_HOME}/config.json) */
+        std::vector<BaseModuleInfo> modules; /* DUSK-level modules */
+        std::vector<UserConfiguration> users; /* Users(that defined in ${DUSK_HOME}/config.json) */
+        UserConfiguration current_user; /* Current user */
     };
 }

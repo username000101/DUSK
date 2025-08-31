@@ -26,6 +26,8 @@ static std::shared_ptr<td::ClientManager> client;
 
 void update::updates_broadcaster() {
     static auto logger = std::make_shared<spdlog::logger>("Updates::updates_broadcaster", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+    spdlog::initialize_logger(logger);
+
     std::thread broadcaster_t([]() { events::EventsInteractions::automatic_broadcaster(std::chrono::milliseconds(100)); });
     broadcaster_t.detach();
     logger->info("Updates and Events broadcasters has been runing");
@@ -58,6 +60,8 @@ td::ClientManager::Response update::send_request(td::td_api::object_ptr<td::td_a
         return {};
 
     static auto logger = std::make_shared<spdlog::logger>("Updates::send_request", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+    spdlog::initialize_logger(logger);
+
     if (!client) {
         logger->debug("Looks like this function running for the first time; initializing the client variable with value (addr){}",
                       reinterpret_cast<std::uintptr_t>(client_.get()));

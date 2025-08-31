@@ -84,6 +84,10 @@ void config::UserConfiguration::inl_parse_config() {
         }
         base_module_info.prefix = base_module_info_json.at("prefix").template get<std::string>();
 
+        /* 'admin' and 'main' variables only for DUSK-level modules*/
+        base_module_info.admin = false;
+        base_module_info.main = false;
+
         spdlog::debug("{}: Loaded module_base:\nFile: {}\nPort: {}\nFunction: {}",
             FUNCSIG, base_module_info.file.string(), base_module_info.rpc_port, base_module_info.get_config_rpc_function);
         this->modules_base_.push_back(std::move(base_module_info));

@@ -11,6 +11,7 @@
 #include "Callbacks.hpp"
 #include "Globals.hpp"
 #include "FS.hpp"
+#include "InitAccessTokens.hpp"
 #include "Start.hpp"
 #include "TerminateHandler.hpp"
 #include "Updates.hpp"
@@ -20,6 +21,8 @@ namespace filesystem {
 }
 
 int args::process_args(int argc, char **argv) {
+    globals::configuration = std::make_shared<config::Configuration>(config::Configuration::parse_file(DUSK_CONFIG));
+
     CLI::App DUSK("Telegram userbot");
 
     bool remove_user_flag = false, show_version = false, reinit_config_flag = false, update_config_flag = false, show_modules = false;
@@ -30,7 +33,6 @@ int args::process_args(int argc, char **argv) {
     user_param->type_name("INT64");
 
     auto remove_user = DUSK.add_flag("-r,--remove", remove_user_flag, "Remove the specified user");
-    remove_user->type_name("BOOL");
     remove_user->needs(user_param);
 
     auto custom_cfg = DUSK.add_option("-f,--cfg,--config", custom_config_file, "Run DUSK with custom configuration file");
@@ -42,10 +44,10 @@ int args::process_args(int argc, char **argv) {
     DUSK.add_flag("-w,--reinit", reinit_config_flag, "Restore the default config");
     DUSK.add_flag("-a,--update", update_config_flag, "Update the config");
 
-    auto modules = DUSK.add_flag("-m,--modules", show_modules, "Show USER modules");
-    modules->needs(user_param);
-
     DUSK.callback([&] () {
+        if (globals::configuration->__has_main_module)
+            init_access_tokens(globals::configuration->modules);
+
         if (user == 0 && (!show_version && !reinit_config_flag && !update_config_flag))
             throw std::invalid_argument("The --user/-u parameter is required");
 
@@ -61,14 +63,12 @@ int args::process_args(int argc, char **argv) {
         if (reinit_config_flag) /* --reinit */
             callbacks::reinit_config();
 
-        if (show_modules) /* --modules */
-            callbacks::modules_list(user);
-
         if (update_config_flag) /* --update */
             callbacks::update_config();
 
         if (!custom_config_file.empty()) /* --config=FILE */ { /* UNDECLARED YET */ }
 
+        init_access_tokens(globals::configuration->modules);
         filesystem::init_user();
 #if defined(DUSK_TDLIB_USE_TEST_DC)
         auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, API_ID, API_HASH, "ru_RU", "Linux", "Linux", "1.0.0");

@@ -13,6 +13,7 @@ td::td_api::object_ptr<td::td_api::Object> get_authorization_state() {
 
 bool auth::authorize() {
     static auto logger = std::make_shared<spdlog::logger>("Auth::authorize", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+    spdlog::initialize_logger(logger);
 
     bool have_password = false;
     std::string phone_number, code, password, password_hint;

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <stdexcept>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -12,18 +13,16 @@ namespace config {
     struct BaseModuleInfo {
         std::filesystem::path file;
         std::uint16_t rpc_port;
-        std::string get_config_rpc_function;
-        std::string prefix;
+        std::string get_config_rpc_function, prefix, set_access_token_function;
+        /* 'admin', 'set_access_token_function', 'main' and 'mod_id' variables only for DUSK-level modules */
+        bool admin = false;
+        bool main = false;
+        std::string mod_id;
     };
 
     struct Module {
-        std::string name;
-        std::string id;
-        std::string author;
-        std::string version;
-        std::string description;
-        std::filesystem::path file;
-        std::filesystem::path directory;
+        std::string name, id, author, version, description;
+        std::filesystem::path file, directory;
 
         Module() = default;
         Module(const std::string& name_, const std::string& id_, const std::string& author_, const std::string& version_,
@@ -84,11 +83,7 @@ namespace config {
 
         auto operator()() const { return static_cast<std::int64_t>(*this); }
     private:
-        std::filesystem::path user_account_directory_;
-        std::filesystem::path tdlib_files_directory_;
-        std::filesystem::path tdlib_database_directory_;
-        std::filesystem::path user_modules_directory_;
-        std::filesystem::path configuration_file_;
+        std::filesystem::path user_account_directory_, tdlib_files_directory_, tdlib_database_directory_, user_modules_directory_, configuration_file_;
 
         std::int64_t id_ = 0;
         std::string prefix_;
@@ -101,17 +96,19 @@ namespace config {
 
     class Configuration {
     public:
-        static Configuration parse_file(const std::filesystem::path& file);
-
-        std::string version;
-        std::vector<UserConfiguration> users;
-        UserConfiguration current_user;
-
         Configuration() = default;
         Configuration(const std::string& version_,
-                      const std::vector<UserConfiguration>& users_) {
+            const std::vector<UserConfiguration>& users_) {
             this->version = version_;
             this->users = users_;
         }
+
+        static Configuration parse_file(const std::filesystem::path& file);
+
+        std::string version; /* The current DUSK version(in ${DUSK_HOME}/config.json) */
+        std::vector<BaseModuleInfo> modules; /* DUSK-level modules */
+        bool __has_main_module; /* True if configuration contains the main module */
+        std::vector<UserConfiguration> users; /* Users(that defined in ${DUSK_HOME}/config.json) */
+        UserConfiguration current_user; /* Current user */
     };
 }

@@ -1,29 +1,18 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/screen_interactive.hpp>
-
-
 inline bool confirm(const std::string& promt) {
-    bool confirmed;
-    auto screen = ftxui::ScreenInteractive::TerminalOutput();
-
-    auto dialog = ftxui::Container::Horizontal({
-        ftxui::Button("Yes", [&] { confirmed = true; screen.ExitLoopClosure()(); }),
-        ftxui::Button("No", [&] { confirmed = false; screen.ExitLoopClosure()(); }),
-        });
-
-    auto renderer = Renderer(dialog, [&] {
-        return window(ftxui::text(promt) | ftxui::center,
-            hbox(dialog->Render()) | ftxui::center);
-    });
-
-    screen.Loop(renderer);
-
-    if (confirmed)
-        return true;
-    else
-        return false;
+    if (!promt.empty())
+        std::cout << promt << " [Yy/Nn]" << std::endl;
+    while (true) {
+        unsigned char sym = std::cin.get();
+        if (sym == 'y' || sym == 'Y')
+            return true;
+        else if (sym == 'n' || sym == 'N')
+            return false;
+        else
+            continue;
+    }
 }

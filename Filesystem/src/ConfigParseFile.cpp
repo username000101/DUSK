@@ -14,6 +14,7 @@
 
 config::Configuration config::Configuration::parse_file(const std::filesystem::path &file) {
     static auto logger = std::make_shared<spdlog::logger>("Configuration", spdlog::sinks_init_list{ std::make_shared<spdlog::sinks::stdout_color_sink_mt>() });
+    spdlog::initialize_logger(logger);
 
     if (!std::filesystem::exists(file))
         shutdown(EXIT_FAILURE, "Failed to create class Configuration instance: file(" + file.string() + ") does not exist");
@@ -63,11 +64,15 @@ config::Configuration config::Configuration::parse_file(const std::filesystem::p
             el_module.set_access_token_function = value.at("set_access_token_function").template get<std::string>();
 
         if (!value.contains("main")) {
-            logger->warn("At file '{}': not found the 'main' field(default value is 'false')",
+            logger->debug("At file '{}': not found the 'main' field(default value is 'false')",
                 el_module.file.string());
             el_module.main = false;
         } else
             el_module.main = value.at("main").template get<bool>();
+        if (el_module.main)
+            result.__has_main_module = true;
+        else
+            result.__has_main_module = false;
 
         result.modules.push_back(el_module);
     }

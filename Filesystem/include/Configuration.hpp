@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <stdexcept>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -106,6 +107,7 @@ namespace config {
 
         std::string version; /* The current DUSK version(in ${DUSK_HOME}/config.json) */
         std::vector<BaseModuleInfo> modules; /* DUSK-level modules */
+        bool __has_main_module; /* True if configuration contains the main module */
         std::vector<UserConfiguration> users; /* Users(that defined in ${DUSK_HOME}/config.json) */
         UserConfiguration current_user; /* Current user */
     };

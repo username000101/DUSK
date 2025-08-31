@@ -11,6 +11,7 @@
 #include "Callbacks.hpp"
 #include "Globals.hpp"
 #include "FS.hpp"
+#include "InitAccessTokens.hpp"
 #include "Start.hpp"
 #include "TerminateHandler.hpp"
 #include "Updates.hpp"
@@ -20,6 +21,8 @@ namespace filesystem {
 }
 
 int args::process_args(int argc, char **argv) {
+    globals::configuration = std::make_shared<config::Configuration>(config::Configuration::parse_file(DUSK_CONFIG));
+
     CLI::App DUSK("Telegram userbot");
 
     bool remove_user_flag = false, show_version = false, reinit_config_flag = false, update_config_flag = false, show_modules = false;
@@ -42,6 +45,9 @@ int args::process_args(int argc, char **argv) {
     DUSK.add_flag("-a,--update", update_config_flag, "Update the config");
 
     DUSK.callback([&] () {
+        if (globals::configuration->__has_main_module)
+            init_access_tokens(globals::configuration->modules);
+
         if (user == 0 && (!show_version && !reinit_config_flag && !update_config_flag))
             throw std::invalid_argument("The --user/-u parameter is required");
 
@@ -62,6 +68,7 @@ int args::process_args(int argc, char **argv) {
 
         if (!custom_config_file.empty()) /* --config=FILE */ { /* UNDECLARED YET */ }
 
+        init_access_tokens(globals::configuration->modules);
         filesystem::init_user();
 #if defined(DUSK_TDLIB_USE_TEST_DC)
         auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, API_ID, API_HASH, "ru_RU", "Linux", "Linux", "1.0.0");

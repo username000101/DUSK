@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <exception>
 #include <sstream>
+#include <stacktrace>
+#include <thread>
 
 #include <rpc/rpc_error.h>
 #include <spdlog/spdlog.h>
@@ -14,17 +16,39 @@
 #include "Updates.hpp"
 
 inline void shutdown(int rcode, const std::string& message = "") noexcept {
+    /* Get and print stacktrace */
+    std::ostringstream stacktrace;
+    stacktrace << std::stacktrace::current();
+    spdlog::info("{}: Stacktrace:\n{}",
+        FUNCSIG, stacktrace.str());
+
+
     if (!message.empty())
         spdlog::info("{}: message: {}",
             FUNCSIG, message);
+
+    /* RPC server finalizing */
     if (globals::rpc_server)
         server::rpc::shutdown_rpc_server();
+
+    /* Clean env (remove the DUSK_TMP folder and more) */
     filesystem::clean_env();
+
+    /* Kill all detached processes(like modules) */
     std::ranges::for_each(globals::detached_processes, [](auto& process) { process.kill(); });
-    spdlog::info("{}: Closing tdlib instance",
-        FUNCSIG);
-    update::send_request(td::td_api::make_object<td::td_api::close>());
+
+    /* Close a tdlib instance */
+    std::thread close_tdlib_instance_th([] { update::send_request(td::td_api::make_object<td::td_api::close>()); });
+
+    /* ^
+       | Waiting for tdlib instance closing */
+    spdlog::info("{}: Closing tdlib instance...",
+    FUNCSIG);
+    close_tdlib_instance_th.join();
+
+    /* Close loggers */
     spdlog::shutdown();
+
     std::exit(rcode);
 }
 

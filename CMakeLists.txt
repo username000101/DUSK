@@ -6,8 +6,7 @@ project(
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(FTXUI_ENABLE_INSTALL OFF)
-set(DUSK_TDLIB_USE_TEST_DC OFF)
+option(DUSK_TDLIB_USE_TEST_DC "If ON DUSK will use test_dc_ parameter in setTdlibParameters" OFF)
 
 find_package(Td REQUIRED)
 

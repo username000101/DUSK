@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <thread>
 
+#include <rpc/rpc_error.h>
 #include <rpc/server.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -16,6 +17,7 @@
 #include "CommandVersion.hpp"
 /* -------- */
 #include "Globals.hpp"
+#include "RPCErrorConverter.hpp"
 
 extern void shutdown(int rcode, const std::string& message) noexcept;
 
@@ -34,7 +36,7 @@ namespace server {
             globals::rpc_server->bind("dusk.send_text_message", dusk_rpc_server_command_send_text_message);
             globals::rpc_server->bind("dusk.edit_text_message", dusk_rpc_server_command_edit_text_message);
 
-            std::thread rpc_server_thread([] { try { globals::rpc_server->run(); } catch (std::exception err) { std::cout << "EXCEPTION: "<< err.what() << std::endl; } });
+            std::thread rpc_server_thread([] { try { globals::rpc_server->run(); } catch (::rpc::rpc_error& rpcerr) { std::cout << "EXCEPTION: "<< convert_rpc_error(rpcerr) << std::endl; } });
             logger->info("RPC server has been started on port {}",
                 port);
             rpc_server_thread.detach();

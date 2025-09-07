@@ -23,6 +23,7 @@
 
 void dusk::start() {
     static auto logger = std::make_shared<spdlog::logger>("DUSK::start", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+    spdlog::initialize_logger(logger);
 
     std::thread update_thread;
 
@@ -50,7 +51,6 @@ void dusk::start() {
             glz::write<glz::opts{.prettify = true}>(std::move(*td::move_tl_object_as<td::td_api::user>(get_me))).value_or("Failed to get user data"));
     }
 
-    globals::configuration = std::make_shared<config::Configuration>(config::Configuration::parse_file(DUSK_CONFIG));
     if (globals::configuration->users.empty()) {
         logger->error("No users found! Please update DUSK configuration file");
         shutdown(EXIT_FAILURE);

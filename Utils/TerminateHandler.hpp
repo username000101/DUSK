@@ -29,7 +29,7 @@ inline void shutdown(int rcode, const std::string& message = "") noexcept {
     std::ranges::for_each(globals::detached_processes, [](auto& process) { process.kill(); });
 
     /* Close a tdlib instance */
-    std::thread close_tdlib_instance_th([] { update::send_request(td::td_api::make_object<td::td_api::close>()); });
+    std::thread close_tdlib_instance_th([] { update::send_request(td::td_api::make_object<td::td_api::close>(), std::make_shared<td::ClientManager>()); });
 
     /* ^
        | Waiting for tdlib instance closing */

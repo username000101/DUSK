@@ -25,13 +25,6 @@ namespace events {
 
         static inline bool broadcast_stop;
     public:
-
-        EventsInteractions() {
-            if (!logger) {
-                logger = std::make_shared<spdlog::logger>("Events", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
-                spdlog::initialize_logger(logger);
-            }
-        }
         static bool append_listener(EventTypeId event_type, EventListenerSignature listener);
         static bool remove_listener(EventListenerSignature listener);
         static void automatic_broadcaster(std::chrono::milliseconds sleep_time);

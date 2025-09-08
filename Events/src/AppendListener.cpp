@@ -3,6 +3,11 @@
 #include <algorithm>
 
 bool events::EventsInteractions::append_listener(events::EventTypeId event_type, events::EventListenerSignature listener) {
+    if (!logger) {
+        logger = std::make_shared<spdlog::logger>("Events", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+        spdlog::initialize_logger(logger);
+    }
+
     if (!listener)
         return false;
 

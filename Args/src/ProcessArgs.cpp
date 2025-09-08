@@ -1,5 +1,6 @@
 #include "Args.hpp"
 
+#include <clocale>
 #include <cstdint>
 #include <filesystem>
 #include <stdexcept>
@@ -50,7 +51,7 @@ int args::process_args(int argc, char **argv) {
             init_access_tokens(globals::configuration->modules);
 
         if (user == 0 && (!show_version && !reinit_config_flag && !update_config_flag))
-            throw std::invalid_argument("The --user/-u parameter is required");
+            shutdown(EXIT_FAILURE, "The --user/-u parameter is required");
 
         globals::current_user = user;
         filesystem::check_filesystem();
@@ -83,12 +84,14 @@ int args::process_args(int argc, char **argv) {
         platform = "Unknown";
 #endif
 
-        std::locale loc("");
-        #if defined(DUSK_TDLIB_USE_TEST_DC)
-        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, API_ID, API_HASH, loc.name(), platform, platform, DUSK_VERSION);
-    #else
-        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, API_ID, API_HASH, loc.name(), platform, platform, DUSK_VERSION);
-    #endif
+        auto loc = std::setlocale(LC_ALL, "");
+        if (!loc)
+            shutdown(EXIT_FAILURE, "std::setlocale() failed");
+#if defined(DUSK_TDLIB_USE_TEST_DC)
+        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, API_ID, API_HASH, loc, platform, platform, DUSK_VERSION);
+#else
+        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, API_ID, API_HASH, loc, platform, platform, DUSK_VERSION);
+#endif
 
         dusk::start();
     });

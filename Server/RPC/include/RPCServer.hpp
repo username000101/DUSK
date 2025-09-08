@@ -38,6 +38,11 @@ namespace server {
                 spdlog::initialize_logger(logger);
             }
 
+            if (globals::rpc_server) {
+                logger->info("Server already started");
+                return;
+            }
+
             events::EventsInteractions::append_listener(td::td_api::updateNewMessage::ID, process_update);
 
             globals::rpc_server = std::make_shared<::rpc::server>(port);

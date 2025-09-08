@@ -2,8 +2,6 @@
 
 #include <algorithm>
 #include <exception>
-#include <sstream>
-#include <stacktrace>
 #include <thread>
 
 #include <rpc/rpc_error.h>
@@ -16,13 +14,6 @@
 #include "Updates.hpp"
 
 inline void shutdown(int rcode, const std::string& message = "") noexcept {
-    /* Get and print stacktrace */
-    std::ostringstream stacktrace;
-    stacktrace << std::stacktrace::current();
-    spdlog::info("{}: Stacktrace:\n{}",
-        FUNCSIG, stacktrace.str());
-
-
     if (!message.empty())
         spdlog::info("{}: message: {}",
             FUNCSIG, message);

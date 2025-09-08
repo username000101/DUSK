@@ -28,12 +28,15 @@
 
 extern void shutdown(int rcode, const std::string& message) noexcept;
 
-static auto logger = std::make_shared<spdlog::logger>("RPC Server", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+static std::shared_ptr<spdlog::logger> logger = nullptr;
 
 namespace server {
     namespace rpc {
         inline void up_rpc_server(std::uint16_t port = 5000) {
-            spdlog::initialize_logger(logger);
+            if (!logger) {
+                logger = std::make_shared<spdlog::logger>("RPC Server", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+                spdlog::initialize_logger(logger);
+            }
 
             events::EventsInteractions::append_listener(td::td_api::updateNewMessage::ID, process_update);
 

@@ -13,8 +13,11 @@
 #include "TerminateHandler.hpp"
 
 config::Configuration config::Configuration::parse_file(const std::filesystem::path &file) {
-    static auto logger = std::make_shared<spdlog::logger>("Configuration", spdlog::sinks_init_list{ std::make_shared<spdlog::sinks::stdout_color_sink_mt>() });
-    spdlog::initialize_logger(logger);
+    static std::shared_ptr<spdlog::logger> logger = nullptr;
+    if (!logger) {
+        logger = std::make_shared<spdlog::logger>("Config::Configuration::parse_file", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+        spdlog::initialize_logger(logger);
+    }
 
     if (!std::filesystem::exists(file))
         shutdown(EXIT_FAILURE, "Failed to create class Configuration instance: file(" + file.string() + ") does not exist");

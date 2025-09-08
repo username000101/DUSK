@@ -18,7 +18,7 @@ namespace events {
 
     class EventsInteractions {
     private:
-        static inline auto logger = std::make_shared<spdlog::logger>("Events", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+        static inline std::shared_ptr<spdlog::logger> logger = nullptr;
 
         static inline std::stack<std::pair<EventTypeId, EventSignature>> updates;
         static inline std::unordered_map<std::uintptr_t, std::pair<EventTypeId, EventListenerSignature>> listeners;
@@ -26,7 +26,12 @@ namespace events {
         static inline bool broadcast_stop;
     public:
 
-        EventsInteractions() { spdlog::initialize_logger(logger); }
+        EventsInteractions() {
+            if (!logger) {
+                logger = std::make_shared<spdlog::logger>("Events", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+                spdlog::initialize_logger(logger);
+            }
+        }
         static bool append_listener(EventTypeId event_type, EventListenerSignature listener);
         static bool remove_listener(EventListenerSignature listener);
         static void automatic_broadcaster(std::chrono::milliseconds sleep_time);

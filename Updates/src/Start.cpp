@@ -22,8 +22,11 @@
 #include "User.hpp"
 
 void dusk::start() {
-    static auto logger = std::make_shared<spdlog::logger>("DUSK::start", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
-    spdlog::initialize_logger(logger);
+    static std::shared_ptr<spdlog::logger> logger = nullptr;
+    if (!logger) {
+        logger = std::make_shared<spdlog::logger>("DUSK::start", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+        spdlog::initialize_logger(logger);
+    }
 
     std::thread update_thread;
 

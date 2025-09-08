@@ -23,8 +23,11 @@ static inline std::unordered_map<std::string, std::pair<std::string, std::string
 inline const std::unordered_map<std::string, std::pair<std::string, std::string>>& get_access_tokens() { return access_tokens; }
 
 inline void init_access_tokens(const std::vector<config::BaseModuleInfo>& el_modules) {
-    static auto logger = std::make_shared<spdlog::logger>("DML", spdlog::sinks_init_list{ std::make_shared<spdlog::sinks::stdout_color_sink_mt>() });
-    spdlog::initialize_logger(logger);
+    static std::shared_ptr<spdlog::logger> logger = nullptr;
+    if (!logger) {
+        logger = std::make_shared<spdlog::logger>("DML", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+        spdlog::initialize_logger(logger);
+    }
 
     std::optional<config::BaseModuleInfo> main_module = std::nullopt;
     for (auto& el_module : el_modules) {

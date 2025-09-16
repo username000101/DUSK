@@ -42,7 +42,6 @@ config::Configuration config::Configuration::parse_file(const std::filesystem::p
         auto& value = early_load_module.value();
 
         BaseModuleInfo el_module;
-        el_module.admin = true;
 
         if (!value.contains("file") || (value.contains("file") && !std::filesystem::exists(value.at("file").template get<std::string>())))
             shutdown(EXIT_FAILURE, std::format("Failed to load dusk-level module: not found the 'file' field or file({}) does not exist", (value.contains("file") ? value.at("file").template get<std::string>() : "FIELD_NOT_FOUND")));
@@ -89,11 +88,10 @@ config::Configuration config::Configuration::parse_file(const std::filesystem::p
         }
 
         auto account_dir = std::filesystem::path(user_config_file).parent_path();
-        auto modules_dir = account_dir / "modules";
         auto tdlib_files_dir = account_dir / "files";
         auto tdlib_database_dir = account_dir / "database";
 
-        auto user_obj = UserConfiguration(account_dir, tdlib_files_dir, tdlib_database_dir, modules_dir);
+        auto user_obj = UserConfiguration(account_dir, tdlib_files_dir, tdlib_database_dir);
         if (user_obj() == globals::current_user)
             result.current_user = user_obj;
         result.users.push_back(user_obj);

@@ -20,34 +20,10 @@ namespace config {
         std::string mod_id;
     };
 
-    struct Module {
-        std::string name, id, author, version, description;
-        std::filesystem::path file, directory;
-
-        Module() = default;
-        Module(const std::string& name_, const std::string& id_, const std::string& author_, const std::string& version_,
-               const std::string& description_,
-               const std::filesystem::path& file_, const std::filesystem::path& directory_) {
-            if (!std::filesystem::exists(file_))
-                throw std::runtime_error("Failed to create struct Module instance: file_(" + file_.string() + ") does not exist");
-            if (!std::filesystem::exists(directory_) || !std::filesystem::is_directory(directory_))
-                throw std::runtime_error("Failed to create struct Module instance: directory_(" + directory_.string() + " does not exist or it's not a directory");
-
-            this->name = std::move(name_);
-            this->id = std::move(id_);
-            this->author = std::move(author_);
-            this->version = std::move(version_);
-            this->description = std::move(description_);
-            this->file = file_;
-            this->directory = directory_;
-        }
-    };
-
     class UserConfiguration {
     public:
         void load_modules();
 
-        const std::vector<Module>& get_modules() const { return this->modules_; }
         const std::vector<std::int64_t>& get_blocked_requests() const { return this->blocked_requests_; }
 
         std::filesystem::path account_directory() { return this->user_account_directory_; }
@@ -87,7 +63,6 @@ namespace config {
 
         std::int64_t id_ = 0;
         std::string prefix_;
-        std::vector<Module> modules_;
         std::vector<BaseModuleInfo> modules_base_;
         std::vector<std::int64_t> blocked_requests_;
 

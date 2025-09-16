@@ -46,7 +46,14 @@ inline void init_access_tokens(const std::vector<config::BaseModuleInfo>& el_mod
             continue;
         }
 
-        globals::detached_processes.push_back(subprocess::RunBuilder({el_module.prefix, el_module.file.string()}).popen());
+        try {
+            if (el_module.prefix.empty())
+                globals::detached_processes.push_back(subprocess::RunBuilder({el_module.file.string()}).popen());
+            else
+                globals::detached_processes.push_back(subprocess::RunBuilder({el_module.prefix, el_module.file.string()}).popen());
+        } catch (std::exception& err) {
+            shutdown(EXIT_FAILURE, std::format("Failed to create subprocess::RunBuilder(file={}): {}", el_module.file.string(), err.what()));
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
         std::optional<rpc::client> el_module_rpc_test;

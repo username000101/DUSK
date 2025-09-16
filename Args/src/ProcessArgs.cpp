@@ -1,5 +1,6 @@
 #include "Args.hpp"
 
+#include <clocale>
 #include <cstdint>
 #include <filesystem>
 #include <stdexcept>
@@ -11,6 +12,7 @@
 #include "Callbacks.hpp"
 #include "Globals.hpp"
 #include "FS.hpp"
+#include "RPCServer.hpp"
 #include "InitAccessTokens.hpp"
 #include "Start.hpp"
 #include "TerminateHandler.hpp"
@@ -49,7 +51,7 @@ int args::process_args(int argc, char **argv) {
             init_access_tokens(globals::configuration->modules);
 
         if (user == 0 && (!show_version && !reinit_config_flag && !update_config_flag))
-            throw std::invalid_argument("The --user/-u parameter is required");
+            shutdown(EXIT_FAILURE, "The --user/-u parameter is required");
 
         globals::current_user = user;
         filesystem::check_filesystem();
@@ -70,11 +72,27 @@ int args::process_args(int argc, char **argv) {
 
         init_access_tokens(globals::configuration->modules);
         filesystem::init_user();
-#if defined(DUSK_TDLIB_USE_TEST_DC)
-        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, API_ID, API_HASH, "ru_RU", "Linux", "Linux", "1.0.0");
+
+        std::string platform;
+#if defined(OS_WINDOWS)
+        platform = "Windows";
+#elif defined(OS_LINUX)
+        platform = "Linux";
+#elif defined(OS_ANDROID)
+        platform = "Android";
 #else
-        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, API_ID, API_HASH, "ru_RU", "Linux", "Linux", "1.0.0");
+        platform = "Unknown";
 #endif
+
+        auto loc = std::setlocale(LC_ALL, "");
+        if (!loc)
+            shutdown(EXIT_FAILURE, "std::setlocale() failed");
+#if defined(DUSK_TDLIB_USE_TEST_DC)
+        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, API_ID, API_HASH, loc, platform, platform, DUSK_VERSION);
+#else
+        auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, API_ID, API_HASH, loc, platform, platform, DUSK_VERSION);
+#endif
+
         dusk::start();
     });
     CLI11_PARSE(DUSK, argc, argv);

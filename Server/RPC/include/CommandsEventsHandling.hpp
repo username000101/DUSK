@@ -65,9 +65,10 @@ inline std::string dusk_rpc_server_unset_event_handler(std::int64_t event_id, co
         for (auto iter = handlers.begin(); iter != handlers.end(); ++iter) {
             if (iter->second == handler_function_name) {
                 handlers.erase(iter);
+                return "";
                 break;
             }
-
         }
+        return "handler_not_found";
     }
 }

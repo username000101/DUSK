@@ -10,8 +10,11 @@
 #include "Updates.hpp"
 
 bool auth::setTdlibParameters(std::shared_ptr<td::ClientManager> client, bool use_test_dc, bool use_files_db, bool use_chat_info_db, bool use_message_db, bool use_secret_chats, td::td_api::int32 api_id, std::string api_hash, std::string system_lang_code, std::string device_model, std::string system_version, std::string application_version) {
-    static auto logger = std::make_shared<spdlog::logger>("Auth::setTdlibParameters", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
-    spdlog::initialize_logger(logger);
+    static std::shared_ptr<spdlog::logger> logger = nullptr;
+    if (!logger) {
+        logger = std::make_shared<spdlog::logger>("Auth::setTdlibParameters", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+        spdlog::initialize_logger(logger);
+    }
 
     if (!client)
         return false;

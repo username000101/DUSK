@@ -13,8 +13,11 @@
 #include "TerminateHandler.hpp"
 
 config::Configuration config::Configuration::parse_file(const std::filesystem::path &file) {
-    static auto logger = std::make_shared<spdlog::logger>("Configuration", spdlog::sinks_init_list{ std::make_shared<spdlog::sinks::stdout_color_sink_mt>() });
-    spdlog::initialize_logger(logger);
+    static std::shared_ptr<spdlog::logger> logger = nullptr;
+    if (!logger) {
+        logger = std::make_shared<spdlog::logger>("Config::Configuration::parse_file", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+        spdlog::initialize_logger(logger);
+    }
 
     if (!std::filesystem::exists(file))
         shutdown(EXIT_FAILURE, "Failed to create class Configuration instance: file(" + file.string() + ") does not exist");
@@ -39,7 +42,6 @@ config::Configuration config::Configuration::parse_file(const std::filesystem::p
         auto& value = early_load_module.value();
 
         BaseModuleInfo el_module;
-        el_module.admin = true;
 
         if (!value.contains("file") || (value.contains("file") && !std::filesystem::exists(value.at("file").template get<std::string>())))
             shutdown(EXIT_FAILURE, std::format("Failed to load dusk-level module: not found the 'file' field or file({}) does not exist", (value.contains("file") ? value.at("file").template get<std::string>() : "FIELD_NOT_FOUND")));
@@ -86,11 +88,10 @@ config::Configuration config::Configuration::parse_file(const std::filesystem::p
         }
 
         auto account_dir = std::filesystem::path(user_config_file).parent_path();
-        auto modules_dir = account_dir / "modules";
         auto tdlib_files_dir = account_dir / "files";
         auto tdlib_database_dir = account_dir / "database";
 
-        auto user_obj = UserConfiguration(account_dir, tdlib_files_dir, tdlib_database_dir, modules_dir);
+        auto user_obj = UserConfiguration(account_dir, tdlib_files_dir, tdlib_database_dir);
         if (user_obj() == globals::current_user)
             result.current_user = user_obj;
         result.users.push_back(user_obj);

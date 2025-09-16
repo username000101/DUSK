@@ -22,8 +22,11 @@
 #include "User.hpp"
 
 void dusk::start() {
-    static auto logger = std::make_shared<spdlog::logger>("DUSK::start", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
-    spdlog::initialize_logger(logger);
+    static std::shared_ptr<spdlog::logger> logger = nullptr;
+    if (!logger) {
+        logger = std::make_shared<spdlog::logger>("DUSK::start", spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+        spdlog::initialize_logger(logger);
+    }
 
     std::thread update_thread;
 
@@ -59,13 +62,11 @@ void dusk::start() {
     
     server::rpc::up_rpc_server();
 
-    logger->info("Raising up modules...");
-    globals::configuration->current_user.load_modules();
-
     update_thread = std::thread([] () { update::updates_broadcaster(); });
     update_thread.detach();
 
     while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
 
     }
 }

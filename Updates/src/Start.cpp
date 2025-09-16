@@ -62,13 +62,11 @@ void dusk::start() {
     
     server::rpc::up_rpc_server();
 
-    logger->info("Raising up modules...");
-    globals::configuration->current_user.load_modules();
-
     update_thread = std::thread([] () { update::updates_broadcaster(); });
     update_thread.detach();
 
     while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
 
     }
 }

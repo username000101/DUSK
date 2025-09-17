@@ -11,6 +11,8 @@
 #include "PrivilegedRequest.hpp"
 #include "Start.hpp"
 
+extern void shutdown(int rcode, const std::string& message) noexcept;
+
 inline void dusk_rpc_server_command_init(const std::string& access_token) {
     if (!check_access(access_token, FUNCSIG))
         return;
@@ -36,11 +38,13 @@ inline void dusk_rpc_server_command_init(const std::string& access_token) {
     platform = "Unknown";
 #endif
 
-    std::locale loc("");
+    auto loc = std::setlocale(LC_ALL, "");
+    if (!loc)
+        shutdown(EXIT_FAILURE, "std::setlocale() failed");
     #if defined(DUSK_TDLIB_USE_TEST_DC)
-    auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, API_ID, API_HASH, loc.name(), platform, platform, DUSK_VERSION);
+    auth::setTdlibParameters(std::make_shared<td::ClientManager>(), DUSK_TDLIB_USE_TEST_DC, true, true, true, true, API_ID, API_HASH, loc, platform, platform, DUSK_VERSION);
 #else
-    auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, API_ID, API_HASH, loc.name(), platform, platform, DUSK_VERSION);
+    auth::setTdlibParameters(std::make_shared<td::ClientManager>(), false, true, true, true, true, API_ID, API_HASH, loc, platform, platform, DUSK_VERSION);
 #endif
 
     dusk::start();
